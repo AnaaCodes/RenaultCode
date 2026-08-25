@@ -7,8 +7,7 @@ Projeto front-end que integra as telas **Visão Geral**, **Minhas F4** e **Detal
 - `index.html` — Visão Geral
 - `minhas-f4.html` — Gerenciamento e filtros
 - `f4.html` — Detalhes de uma F4
-- `css/` — tokens, layout, componentes e estilos por págin<img width="619" height="186" alt="{7F682B7B-48D9-4469-AB3C-8A08C097C50A}" src="https://github.com/user-attachments/assets/adee4f94-1ad3-4625-a2e4-0a15b1fcb467" />
-a
+- `css/` — tokens, layout, componentes e estilos por página
 - `js/components/` — sidebar e header compartilhados
 - `js/core/` — comportamento global da aplicação
 - `js/data/` — dados demonstrativos
@@ -21,9 +20,7 @@ a
 
 Também é possível executar `index.html` usando a extensão **Live Server**. Como o projeto usa módulos JavaScript, ele deve ser servido por HTTP; não abra os HTML diretamente com `file://`.
 Ao instalar a extenção basta selecionar essa opção que se localiza na barra lateral inferior direita.
-![Uploading {7F682B7B-48D9-4469-AB3C-8A08C097C50A}.png…]()
-
-
+<img width="619" height="186" alt="{7F682B7B-48D9-4469-AB3C-8A08C097C50A}" src="https://github.com/user-attachments/assets/adee4f94-1ad3-4625-a2e4-0a15b1fcb467" />
 
 ## Navegação já integrada
 
