@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Criação de uma nova solicitação F4">
+  <title>Nova F4 | Sistema F4</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/nova-f4.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <div class="workspace">
+      <div id="headerMount"></div>
+
+      <main class="main-content">
+        <div class="page-container new-f4-page">
+
+          <section class="form-progress" aria-labelledby="formTitle">
+            <div class="form-progress-heading">
+              <div>
+                <p class="eyebrow">Nova F4</p>
+                <h2 id="formTitle">Dados gerais</h2>
+              </div>
+
+              <span class="request-number" aria-label="Número do pedido">
+                Pedido nº <strong>PWD0245</strong>
+              </span>
+            </div>
+
+            <ol class="stepper" aria-label="Etapas para criação da F4">
+              <li class="step is-active" aria-current="step">
+                <span class="step-number">1</span>
+                <span class="step-content">
+                  <strong>Dados gerais</strong>
+                  <small>Informações iniciais</small>
+                </span>
+              </li>
+
+              <li class="step">
+                <span class="step-number">2</span>
+                <span class="step-content">
+                  <strong>Fornecedor</strong>
+                  <small>Dados do fornecedor</small>
+                </span>
+              </li>
+
+              <li class="step">
+                <span class="step-number">3</span>
+                <span class="step-content">
+                  <strong>Impactos</strong>
+                  <small>Avaliação de impactos</small>
+                </span>
+              </li>
+
+              <li class="step">
+                <span class="step-number">4</span>
+                <span class="step-content">
+                  <strong>DOA</strong>
+                  <small>Dados complementares</small>
+                </span>
+              </li>
+
+              <li class="step">
+                <span class="step-number">5</span>
+                <span class="step-content">
+                  <strong>Revisão final</strong>
+                  <small>Conferência e envio</small>
+                </span>
+              </li>
+            </ol>
+          </section>
+
+          <form class="new-f4-form" id="newF4Form" novalidate>
+            <section class="form-card" aria-labelledby="generalInfoTitle">
+              <div class="form-card-header">
+                <div>
+                  <p class="section-kicker">Etapa 1 de 5</p>
+                  <h3 id="generalInfoTitle">Informações da solicitação</h3>
+                  <p>Preencha os dados que identificam e contextualizam a alteração contratual.</p>
+                </div>
+                <span class="required-note"><span aria-hidden="true">*</span> Campos obrigatórios</span>
+              </div>
+
+              <div class="form-layout">
+                <div class="form-column">
+                  <label class="form-field form-field-wide">
+                    <span class="field-label">Título <b aria-hidden="true">*</b></span>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      maxlength="120"
+                      autocomplete="off"
+                      placeholder="Ex.: Alteração de fornecedor — Peça A"
+                      required
+                    >
+                    <small class="field-help">Use um título curto que permita reconhecer a F4 rapidamente.</small>
+                  </label>
+
+                  <label class="form-field form-field-wide">
+                    <span class="field-label">Descrição <b aria-hidden="true">*</b></span>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows="4"
+                      maxlength="600"
+                      placeholder="Descreva resumidamente o que será alterado e o motivo da solicitação."
+                      required
+                    ></textarea>
+                    <span class="field-meta"><small>Contextualize a solicitação sem detalhar a causa técnica.</small><small><span id="descriptionCount">0</span>/600</small></span>
+                  </label>
+
+                  <label class="form-field form-field-wide">
+                    <span class="field-label">Gestor da F4 <b aria-hidden="true">*</b></span>
+                    <input
+                      type="text"
+                      id="manager"
+                      name="manager"
+                      autocomplete="off"
+                      placeholder="Nome do responsável pela gestão da F4"
+                      required
+                    >
+                  </label>
+
+                  <label class="form-field form-field-wide">
+                    <span class="field-label">Causa detalhada da modificação <b aria-hidden="true">*</b></span>
+                    <textarea
+                      id="changeCause"
+                      name="changeCause"
+                      rows="7"
+                      maxlength="1200"
+                      placeholder="Detalhe a origem, necessidade e contexto da modificação."
+                      required
+                    ></textarea>
+                    <span class="field-meta"><small>Inclua as informações necessárias para a análise das áreas envolvidas.</small><small><span id="causeCount">0</span>/1200</small></span>
+                  </label>
+                </div>
+
+                <div class="form-column">
+                  <div class="field-row two-columns">
+                    <label class="form-field">
+                      <span class="field-label">Veículos/Órgãos</span>
+                      <input type="text" id="vehicles" name="vehicles" placeholder="Ex.: Kardian, Engenharia">
+                    </label>
+
+                    <label class="form-field">
+                      <span class="field-label">Origem da modificação</span>
+                      <select id="changeOrigin" name="changeOrigin">
+                        <option value="" selected>Selecione uma origem</option>
+                        <option value="Fornecedor">Fornecedor</option>
+                        <option value="Engenharia">Engenharia</option>
+                        <option value="Compras">Compras</option>
+                        <option value="Qualidade">Qualidade</option>
+                        <option value="Projeto">Projeto</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label class="form-field form-field-wide">
+                    <span class="field-label">SCOPP Dev GAP ECO ID</span>
+                    <input type="text" id="scoppId" name="scoppId" placeholder="Informe o identificador, se aplicável">
+                  </label>
+
+                  <div class="field-row two-columns">
+                    <label class="form-field">
+                      <span class="field-label">F4 multidisciplinar</span>
+                      <select id="multidisciplinary" name="multidisciplinary">
+                        <option value="" selected>Selecione</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
+                    </label>
+
+                    <label class="form-field">
+                      <span class="field-label">Número LUP</span>
+                      <input type="text" id="lupNumber" name="lupNumber" placeholder="Ex.: LUP-000123">
+                    </label>
+                  </div>
+
+                  <fieldset class="choice-group">
+                    <legend>Modo de pagamento SET</legend>
+                    <p>Selecione uma opção quando houver impacto na forma de pagamento.</p>
+                    <div class="choice-grid">
+                      <label class="choice-card">
+                        <input type="radio" name="setPayment" value="Cash or instalments">
+                        <span class="choice-control" aria-hidden="true"></span>
+                        <span>
+                          <strong>Cash or instalments</strong>
+                          <small>Pagamento em dinheiro ou parcelado</small>
+                        </span>
+                      </label>
+
+                      <label class="choice-card">
+                        <input type="radio" name="setPayment" value="Token">
+                        <span class="choice-control" aria-hidden="true"></span>
+                        <span>
+                          <strong>Token</strong>
+                          <small>Pagamento via token</small>
+                        </span>
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="choice-group compact-choice-group">
+                    <legend>LUP de qualidade do cliente (QC)</legend>
+                    <div class="segmented-choice" role="radiogroup" aria-label="LUP de qualidade do cliente">
+                      <label>
+                        <input type="radio" name="customerQualityLup" value="Sim">
+                        <span>Sim</span>
+                      </label>
+                      <label>
+                        <input type="radio" name="customerQualityLup" value="Não">
+                        <span>Não</span>
+                      </label>
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+            </section>
+
+            <footer class="form-actions">
+              <div class="autosave-status" id="autosaveStatus" aria-live="polite">
+                Nenhuma alteração salva nesta sessão.
+              </div>
+
+              <div class="form-actions-buttons">
+                <button class="secondary-button" type="button" id="saveDraftButton">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5V3Zm2 2v14h10V6.2L15.8 5H15v5H9V5H7Zm4 0v3h2V5h-2Zm-2 8h6v4H9v-4Z"/></svg>
+                  Salvar rascunho
+                </button>
+
+                <button class="primary-button" type="submit">
+                  Continuar para fornecedor
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg>
+                </button>
+              </div>
+            </footer>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pages/nova-f4.js"></script>
+</body>
+</html>

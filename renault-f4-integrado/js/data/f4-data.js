@@ -1,0 +1,140 @@
+export const F4_DATA = [
+  {
+    id: '0023',
+    title: 'Alteração de fornecedor — Peça A',
+    description: 'Adequação contratual para peça A.',
+    status: 'Devolvida',
+    updatedAt: '2026-08-25',
+    owner: 'Você',
+    responsible: 'Você',
+    sector: 'Engenharia',
+    stage: 'Ajuste solicitado',
+    dueDate: '2026-08-25',
+    requiresMyApproval: false
+  },
+  {
+    id: '0028',
+    title: 'Revisão contratual — Fornecedor B',
+    description: 'Revisão de condição comercial e prazo contratual.',
+    status: 'Submetida',
+    updatedAt: '2026-08-24',
+    owner: 'Carlos Braatz',
+    responsible: 'Você',
+    sector: 'Compras',
+    stage: 'Minha aprovação',
+    dueDate: '2026-08-26',
+    requiresMyApproval: true
+  },
+  {
+    id: '0031',
+    title: 'Alteração de peça — Componente C',
+    description: 'Ajuste técnico para substituição do componente.',
+    status: 'Submetida',
+    updatedAt: '2026-08-23',
+    owner: 'Você',
+    responsible: 'Mariana Lopes',
+    sector: 'Engenharia',
+    stage: 'Em análise',
+    dueDate: '2026-08-28',
+    requiresMyApproval: false
+  },
+  {
+    id: '0019',
+    title: 'Atualização de contrato — Serviço D',
+    description: 'Atualização de escopo e vigência contratual.',
+    status: 'Aprovada',
+    updatedAt: '2026-08-22',
+    owner: 'Você',
+    responsible: 'Carlos Braatz',
+    sector: 'Comercial',
+    stage: 'Finalizada',
+    dueDate: '2026-08-30',
+    requiresMyApproval: false
+  },
+  {
+    id: '0022',
+    title: 'Revisão contratual — Peça E',
+    description: 'Ajuste de condição comercial para nova vigência.',
+    status: 'Rascunho',
+    updatedAt: '2026-08-20',
+    owner: 'Carlos Braatz',
+    responsible: 'Você',
+    sector: 'Comercial',
+    stage: 'Rascunho',
+    dueDate: '2026-09-03',
+    requiresMyApproval: false
+  },
+  {
+    id: '0033',
+    title: 'Mudança de fornecedor — Serviço F',
+    description: 'Troca do fornecedor responsável pelo serviço.',
+    status: 'Rejeitada',
+    updatedAt: '2026-08-18',
+    owner: 'Você',
+    responsible: 'Paula Martins',
+    sector: 'Compras',
+    stage: 'Encerrada',
+    dueDate: '2026-08-29',
+    requiresMyApproval: false
+  },
+  {
+    id: '0034',
+    title: 'Inclusão de cláusula — Contrato G',
+    description: 'Inclusão de cláusula de reajuste contratual.',
+    status: 'Rascunho',
+    updatedAt: '2026-08-17',
+    owner: 'Você',
+    responsible: 'Você',
+    sector: 'Financeiro',
+    stage: 'Rascunho',
+    dueDate: '2026-09-06',
+    requiresMyApproval: false
+  },
+  {
+    id: '0035',
+    title: 'Revisão de valor — Fornecedor H',
+    description: 'Readequação do valor global do contrato.',
+    status: 'Devolvida',
+    updatedAt: '2026-08-16',
+    owner: 'Mariana Lopes',
+    responsible: 'Você',
+    sector: 'Financeiro',
+    stage: 'Ajuste solicitado',
+    dueDate: '2026-09-01',
+    requiresMyApproval: false
+  },
+  {
+    id: '0036',
+    title: 'Renovação contratual — Serviço I',
+    description: 'Renovação do contrato por novo período de vigência.',
+    status: 'Aprovada',
+    updatedAt: '2026-08-14',
+    owner: 'Carlos Braatz',
+    responsible: 'Paula Martins',
+    sector: 'Compras',
+    stage: 'Finalizada',
+    dueDate: '2026-09-04',
+    requiresMyApproval: false
+  },
+  {
+    id: '0037',
+    title: 'Cancelamento de item — Contrato J',
+    description: 'Retirada de item que não será mais fornecido.',
+    status: 'Rejeitada',
+    updatedAt: '2026-08-12',
+    owner: 'Você',
+    responsible: 'Carlos Braatz',
+    sector: 'Engenharia',
+    stage: 'Encerrada',
+    dueDate: '2026-09-08',
+    requiresMyApproval: false
+  }
+];
+
+export const FLOW_SUMMARY = [
+  { key: 'Rascunho', label: 'Draft', value: 12, className: 'draft-stage' },
+  { key: 'Submetida', label: 'Submetidas', value: 8, className: 'submitted-stage' },
+  { key: 'Em análise', label: 'Em análise', value: 5, className: 'analysis-stage' },
+  { key: 'Rejeitada', label: 'Rejeitadas', value: 2, className: 'rejected-stage' },
+  { key: 'Aprovada', label: 'Aprovadas', value: 18, className: 'approved-stage' }
+];

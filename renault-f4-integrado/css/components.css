@@ -1,0 +1,100 @@
+.section-kicker,
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--purple);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.section-heading,
+.table-card-header,
+.flow-header,
+.filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.section-heading h3,
+.table-card-header h3,
+.flow-header h3,
+.filter-heading h3 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+.card,
+.table-card,
+.filter-panel,
+.flow-card {
+  border: 1px solid rgba(0, 0, 0, .04);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.primary-button,
+.secondary-button,
+.text-button {
+  border: 0;
+  cursor: pointer;
+}
+.primary-button,
+.secondary-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.primary-button { background: var(--purple); color: #fff; box-shadow: 0 7px 16px rgba(79,22,184,.18); }
+.primary-button:hover { background: var(--purple-dark); }
+.secondary-button { background: var(--surface); border: 1px solid var(--border); }
+.secondary-button:hover { background: var(--surface-muted); }
+.primary-button svg,
+.secondary-button svg { width: 19px; height: 19px; fill: currentColor; }
+.text-button { padding: 6px 0; background: transparent; color: var(--purple); font-weight: 500; }
+.text-button:hover { text-decoration: underline; }
+
+.status-badge {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status-badge.rascunho { color: var(--gray); background: var(--gray-bg); }
+.status-badge.submetida { color: var(--blue); background: var(--blue-bg); }
+.status-badge.devolvida { color: var(--orange); background: var(--orange-bg); }
+.status-badge.aprovada { color: var(--green); background: var(--green-bg); }
+.status-badge.rejeitada { color: var(--red); background: var(--red-bg); }
+.status-badge.em-analise { color: var(--purple); background: var(--purple-bg); }
+
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  max-width: min(360px, calc(100vw - 48px));
+  padding: 12px 16px;
+  border-radius: 9px;
+  background: #222;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.toast.show { opacity: 1; transform: translateY(0); }

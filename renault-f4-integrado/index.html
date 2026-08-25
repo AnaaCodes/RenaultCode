@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Visão geral do sistema F4 Renault Geely do Brasil">
+  <title>Visão Geral | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content">
+        <div class="page-container">
+          <section class="welcome-block" aria-labelledby="welcomeTitle">
+            <div><h2 id="welcomeTitle">Olá, Analice!</h2><p>Visão geral das suas solicitações F4</p></div>
+          </section>
+
+          <section class="quick-actions" aria-label="Ações rápidas">
+            <button class="quick-card" type="button" data-placeholder-action="Nova F4"><span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M7 2h7l5 5v15H7V2Zm8 2.5V8h3.5L15 4.5ZM9 4v16h8V10h-4V4H9Zm3 8h2v2h2v2h-2v2h-2v-2h-2v-2h2v-2Z"/></svg></span><span>Criar uma F4</span></button>
+            <button class="quick-card" type="button" data-go="minhas-f4"><span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6V2Zm2 2v16h9V8h-4V4H8Zm7 .8V6h1.2L15 4.8ZM10 10h5v2h-5v-2Zm0 4h5v2h-5v-2Z"/></svg></span><span>Minhas F4</span></button>
+            <button class="quick-card" type="button" data-go="returned"><span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm-1 3h2v5.4l3.2 1.9-1 1.7-4.2-2.5V7Z"/></svg></span><span>Pendências</span></button>
+            <button class="quick-card" type="button" data-placeholder-action="Histórico"><span class="quick-icon"><svg viewBox="0 0 24 24"><path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10ZM6 6v2h12V6H6Zm2 6h3v3H8v-3Z"/></svg></span><span>Consultar histórico</span></button>
+          </section>
+
+          <section class="attention-section" aria-labelledby="attentionTitle">
+            <div class="section-heading"><div><p class="section-kicker">Prioridades</p><h3 id="attentionTitle">Requer sua atenção</h3></div></div>
+            <div class="attention-grid">
+              <button class="attention-card returned-attention" type="button" data-go="returned"><div class="attention-topline"><span class="attention-icon">↩</span><strong data-count="returned">0</strong></div><div class="attention-content"><h4>Devolvidas para ajuste</h4><p>Solicitações que precisam ser revisadas antes de voltar ao fluxo.</p></div><span class="attention-link">Ver F4 ›</span></button>
+              <button class="attention-card deadline-attention" type="button" data-go="dueSoon"><div class="attention-topline"><span class="attention-icon">!</span><strong data-count="dueSoon">0</strong></div><div class="attention-content"><h4>Próximas do prazo</h4><p>F4 com prazo previsto para os próximos cinco dias.</p></div><span class="attention-link">Acompanhar ›</span></button>
+              <button class="attention-card approval-attention" type="button" data-go="approval"><div class="attention-topline"><span class="attention-icon">✓</span><strong data-count="approval">0</strong></div><div class="attention-content"><h4>Aguardando sua aprovação</h4><p>Solicitações que dependem de uma decisão sua para continuar.</p></div><span class="attention-link">Analisar ›</span></button>
+            </div>
+          </section>
+
+          <section class="table-card work-queue-card" aria-labelledby="workQueueTitle">
+            <div class="table-card-header"><div><p class="section-kicker">Prioridade de acompanhamento</p><h3 id="workQueueTitle">Minha fila de trabalho</h3></div><button class="view-all" type="button" data-go="minhas-f4">Ver todas ›</button></div>
+            <div class="table-wrapper">
+              <table class="work-queue-table">
+                <thead><tr><th>F4</th><th>Solicitação</th><th>Etapa atual</th><th>Prazo</th><th>Situação</th></tr></thead>
+                <tbody id="workQueueBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="flow-card" aria-labelledby="flowTitle">
+            <div class="flow-header"><div><p class="section-kicker">Acompanhamento do processo</p><h3 id="flowTitle">Visão do fluxo das F4</h3></div><p>Distribuição atual das solicitações por etapa do processo.</p></div>
+            <div class="flow-track" id="flowTrack" role="list" aria-label="Etapas do fluxo das F4"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/dashboard.js"></script>
+</body>
+</html>
