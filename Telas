@@ -1,0 +1,26 @@
+Descrição das telas para usaer no front.
+
+As telas são divididas de acordo com os Usuários, os quais são:
+1. Fornecedor
+  a. Criar F4 (ùnico q pode fazer isso)
+  b. minhas F4
+
+2. Técnico
+  a. Gestão de F4
+
+3. Comercial
+  a. Gestão de F4
+
+4. Gestor de projeto
+  a. Gestão de Projetos
+  b. Gestão de F4
+
+5. GERAIS
+ a. Visão Geral
+ b. Pendências
+ c. Histórico
+ d. Notificações
+ e. Configurações
+ f. Perfil
+ g. Visualizar f4
+  
