@@ -26,7 +26,7 @@ function updateStepperPresentation() {
 
   const viewport = stepper.getBoundingClientRect();
   const viewportCenter = viewport.left + (viewport.width / 2);
-  const fadeDistance = Math.max(viewport.width * .52, 1);
+  const fadeDistance = Math.max(viewport.width * .53, 1);
 
   steps.forEach(step => {
     const rect = step.getBoundingClientRect();
@@ -34,11 +34,11 @@ function updateStepperPresentation() {
     const distance = Math.abs(itemCenter - viewportCenter);
     const normalizedDistance = Math.min(distance / fadeDistance, 1);
 
-    let emphasis = 1 - (normalizedDistance * .58);
-
-    if (step.classList.contains('is-active')) {
-      emphasis = Math.max(emphasis, .78);
-    }
+    // As etapas próximas das extremidades perdem ênfase.
+    // A etapa ativa permanece totalmente nítida.
+    const emphasis = step.classList.contains('is-active')
+      ? 1
+      : Math.max(.28, 1 - (normalizedDistance * .76));
 
     step.style.setProperty('--step-emphasis', emphasis.toFixed(3));
   });
@@ -73,6 +73,63 @@ function setupStepperNavigation() {
   if (!stepper || !stepperShell) return;
 
   stepper.addEventListener('scroll', requestStepperUpdate, { passive: true });
+
+  // Drag-to-scroll com o mouse: clicar em qualquer área do stepper e arrastar.
+  // O preventDefault + user-select:none no CSS impedem que o navegador
+  // selecione os textos em vez de movimentar a navegação.
+  let isDragging = false;
+  let dragPointerId = null;
+  let dragStartX = 0;
+  let dragStartScroll = 0;
+
+  stepper.addEventListener('pointerdown', event => {
+    // No touch, mantemos o scroll nativo do navegador, que já é mais fluido.
+    if (event.pointerType === 'touch') return;
+
+    // Aceita apenas o botão principal do mouse/caneta.
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    event.preventDefault();
+
+    isDragging = true;
+    dragPointerId = event.pointerId;
+    dragStartX = event.clientX;
+    dragStartScroll = stepper.scrollLeft;
+
+    stepper.classList.add('is-dragging');
+    stepper.setPointerCapture?.(event.pointerId);
+  });
+
+  stepper.addEventListener('pointermove', event => {
+    if (!isDragging || event.pointerId !== dragPointerId) return;
+
+    event.preventDefault();
+    const distance = event.clientX - dragStartX;
+    stepper.scrollLeft = dragStartScroll - distance;
+  });
+
+  const finishDrag = event => {
+    if (!isDragging) return;
+    if (dragPointerId !== null && event.pointerId !== dragPointerId) return;
+
+    isDragging = false;
+    stepper.classList.remove('is-dragging');
+
+    if (dragPointerId !== null && stepper.hasPointerCapture?.(dragPointerId)) {
+      stepper.releasePointerCapture(dragPointerId);
+    }
+
+    dragPointerId = null;
+    requestStepperUpdate();
+  };
+
+  stepper.addEventListener('pointerup', finishDrag);
+  stepper.addEventListener('pointercancel', finishDrag);
+  stepper.addEventListener('lostpointercapture', () => {
+    isDragging = false;
+    dragPointerId = null;
+    stepper.classList.remove('is-dragging');
+  });
 
   stepper.addEventListener('wheel', event => {
     const maxScroll = stepper.scrollWidth - stepper.clientWidth;

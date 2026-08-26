@@ -25,29 +25,6 @@
   gap: 24px;
 }
 
-.form-progress-heading h2 {
-  position: relative;
-  margin: 0;
-  padding-bottom: 10px;
-  font-family: "Sora", sans-serif;
-  font-size: clamp(27px, 2.5vw, 36px);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -.025em;
-  color: #444;
-}
-
-.form-progress-heading h2::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 92px;
-  height: 3px;
-  border-radius: 999px;
-  background: rgb(79, 22, 184);;
-}
-
 .request-number {
   display: inline-flex;
   align-items: center;
@@ -72,8 +49,14 @@
    STEPPER
    ========================= */
 
+/*
+ * Janela horizontal compacta: mesmo no desktop parte das etapas fica
+ * fora da área visível, reforçando que o componente pode ser rolado.
+ */
 .stepper-shell {
   position: relative;
+  width: min(100%, 560px);
+  max-width: 560px;
   min-width: 0;
   isolation: isolate;
 }
@@ -91,132 +74,180 @@
 }
 
 .stepper {
-  --step-gap: 16px;
+  --step-gap: 26px;
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: var(--step-gap);
   margin: 0;
-  padding: 5px 10px 10px 4px;
+  padding: 2px 56px 10px 0;
   overflow-x: auto;
   overflow-y: hidden;
   list-style: none;
   scroll-behavior: smooth;
   scroll-snap-type: x proximity;
-  scroll-padding-inline: 18px;
+  scroll-padding-inline: 26px;
   overscroll-behavior-inline: contain;
   touch-action: pan-x pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Impede que strong/span sejam selecionados durante o drag com mouse. */
+.stepper * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+.stepper:active,
+.stepper.is-dragging {
+  cursor: grabbing;
+}
+
+/* Durante o drag o movimento deve acompanhar o ponteiro 1:1.
+   Depois que solta, scroll-snap volta a funcionar normalmente. */
+.stepper.is-dragging {
+  scroll-behavior: auto;
+  scroll-snap-type: none;
 }
 
 .stepper::-webkit-scrollbar {
   display: none;
 }
 
-/* O fade aparece somente na direção em que ainda existe conteúdo. */
+/* Fade nas bordas somente quando há conteúdo naquela direção. */
 .stepper-shell.has-left-overflow .stepper {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 54px, #000 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 54px, #000 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 72px, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 72px, #000 100%);
 }
 
 .stepper-shell.has-right-overflow .stepper {
-  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 54px), transparent 100%);
-  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 54px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 84px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 84px), transparent 100%);
 }
 
 .stepper-shell.has-left-overflow.has-right-overflow .stepper {
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 54px,
-    #000 calc(100% - 54px),
+    #000 72px,
+    #000 calc(100% - 84px),
     transparent 100%
   );
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 54px,
-    #000 calc(100% - 54px),
+    #000 72px,
+    #000 calc(100% - 84px),
     transparent 100%
   );
 }
 
 .stepper:focus-visible {
-  border-radius: 10px;
-  outline: 2px solid rgba(79, 22, 184, .55);
-  outline-offset: 3px;
+  border-radius: 4px;
+  outline: 2px solid rgba(79, 22, 184, .52);
+  outline-offset: 4px;
 }
 
 .step {
-  --step-emphasis: .72;
+  --step-emphasis: 1;
   position: relative;
-  flex: 0 0 clamp(220px, 20vw, 270px);
-  min-width: 0;
-  display: flex;
+  flex: 0 0 auto;
+  min-width: max-content;
+  display: inline-flex;
   align-items: center;
-  gap: 11px;
-  padding: 7px 10px;
-  border-radius: 12px;
-  color: #969696;
+  gap: 8px;
+  padding: 5px 0 11px;
+  color: #9a9a9a;
   opacity: var(--step-emphasis);
   scroll-snap-align: center;
-  transition: opacity .16s ease, background-color .18s ease;
+  text-transform: uppercase;
+  transition: opacity .18s ease, color .18s ease;
+}
+
+/* Não existe linha conectando as etapas. */
+.step::before {
+  content: none;
 }
 
 .step-number {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
   display: grid;
   place-items: center;
-  border: 1px solid #d8d8d8;
+  border: 0;
   border-radius: 50%;
-  background: #e2e2e2;
-  color: #878787;
+  background: #e4e4e4;
+  color: #a2a2a2;
   font-family: "Sora", sans-serif;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 1;
   box-sizing: border-box;
-  transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, color .18s ease;
+  transition: width .18s ease, height .18s ease, flex-basis .18s ease, background-color .18s ease, color .18s ease;
 }
 
 .step-content {
   min-width: 0;
-  display: grid;
-  gap: 2px;
+  display: block;
+  padding: 0;
 }
 
 .step-content strong {
-  overflow: hidden;
+  display: block;
+  overflow: visible;
   color: inherit;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  text-overflow: ellipsis;
+  line-height: 1;
+  letter-spacing: .01em;
+  text-overflow: clip;
   white-space: nowrap;
+  transition: font-size .18s ease, color .18s ease;
 }
 
+/* A referência desejada mostra somente o nome da etapa. */
 .step-content small {
-  overflow: hidden;
-  color: #9f9f9f;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .step.is-active {
-  color: var(--text-secondary);
+  padding-right: 18px;
+  color: #4b4b4b;
+  opacity: 1 !important;
+}
+
+/* Sublinhado somente na etapa ativa. */
+.step.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--purple);
 }
 
 .step.is-active .step-number {
-  border-color: var(--purple);
+  width: 29px;
+  height: 29px;
+  flex-basis: 29px;
   background: var(--purple);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(79, 22, 184, .20);
+  font-size: 13px;
 }
 
 .step.is-active .step-content strong {
-  color: var(--text-secondary);
+  color: #505050;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -.02em;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -225,7 +256,8 @@
   }
 
   .step,
-  .step-number {
+  .step-number,
+  .step-content strong {
     transition: none;
   }
 }
@@ -678,8 +710,8 @@
 }
 
 @media (max-width: 900px) {
-  .step {
-    flex-basis: 218px;
+  .stepper-shell {
+    width: min(100%, 540px);
   }
 
   .form-layout {
@@ -752,29 +784,25 @@
     font-size: 26px;
   }
 
+  .stepper-shell {
+    width: 100%;
+  }
+
   .stepper {
-    --step-gap: 10px;
-    padding-right: 8px;
+    --step-gap: 20px;
+    padding-right: 48px;
   }
 
   .step {
-    flex-basis: 188px;
-    gap: 9px;
-    padding-inline: 6px;
+    gap: 7px;
   }
 
-  .step-number {
-    width: 29px;
-    height: 29px;
-    flex-basis: 29px;
+  .step.is-active {
+    padding-right: 12px;
   }
 
-  .step-content strong {
-    font-size: 11px;
-  }
-
-  .step-content small {
-    font-size: 9.5px;
+  .step.is-active .step-content strong {
+    font-size: 16px;
   }
 
   .form-layout,
