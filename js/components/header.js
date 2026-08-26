@@ -14,7 +14,7 @@ export function renderHeader(title) {
       <button class="profile" type="button" data-placeholder="Perfil" aria-label="Abrir menu do perfil">
         <div class="profile-text">
           <span class="profile-name">Analice Mendes</span>
-          <span class="profile-role">Engenharia</span>
+          <span class="profile-role">Fornecedor</span>
         </div>
         <img src="./assets/images/profile.jpg" alt="Foto de perfil de Analice Mendes">
         <svg class="profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z"/></svg>

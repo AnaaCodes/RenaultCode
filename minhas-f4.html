@@ -1,63 +1,857 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Gerenciamento das solicitações F4">
-  <title>Minhas F4 | Sistema F4</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/tokens.css">
-  <link rel="stylesheet" href="./css/base.css">
-  <link rel="stylesheet" href="./css/layout.css">
-  <link rel="stylesheet" href="./css/components.css">
-  <link rel="stylesheet" href="./css/minhas-f4.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="Gerenciamento das solicitações F4"
+  >
+
+
+  <title>
+    Minhas F4 | Sistema F4
+  </title>
+
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+
+
+  <link
+    rel="stylesheet"
+    href="./css/tokens.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/base.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/layout.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/components.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./css/minhas-f4.css"
+  >
+
 </head>
+
+
 <body>
-  <div class="app-shell" id="appShell">
-    <div id="sidebarMount"></div>
-    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-    <div class="workspace">
-      <div id="headerMount"></div>
-      <main class="main-content">
-        <div class="page-container">
-          <section class="page-heading" aria-labelledby="pageTitle">
-            <div><p class="eyebrow">Gerenciamento</p><h2 id="pageTitle">Acompanhe suas solicitações F4</h2><p class="page-description">Consulte o andamento, identifique pendências e acesse rapidamente as F4 que precisam da sua atenção.</p></div>
-            <button class="primary-button" type="button" id="newF4Button"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>Nova F4</button>
-          </section>
 
-          <section aria-labelledby="summaryTitle">
-            <div class="section-heading compact-heading"><div><p class="eyebrow">Visão rápida</p><h3 id="summaryTitle">Resumo geral</h3></div></div>
-            <div class="stats-grid" id="statsGrid">
-              <button class="stat-card is-selected" type="button" data-status="Todos" aria-pressed="true"><span class="stat-topline"><span class="stat-label">Todas as F4</span></span><strong class="stat-value" data-stat="Todos">0</strong><span class="stat-help">Total no período</span></button>
-              <button class="stat-card" type="button" data-status="Rascunho" aria-pressed="false"><span class="stat-topline"><span class="stat-label">Rascunho</span><span class="status-dot draft"></span></span><strong class="stat-value" data-stat="Rascunho">0</strong><span class="stat-help">Ainda não submetidas</span></button>
-              <button class="stat-card" type="button" data-status="Submetida" aria-pressed="false"><span class="stat-topline"><span class="stat-label">Submetidas</span><span class="status-dot submitted"></span></span><strong class="stat-value" data-stat="Submetida">0</strong><span class="stat-help">Em fluxo de análise</span></button>
-              <button class="stat-card" type="button" data-status="Devolvida" aria-pressed="false"><span class="stat-topline"><span class="stat-label">Devolvidas</span><span class="status-dot returned"></span></span><strong class="stat-value" data-stat="Devolvida">0</strong><span class="stat-help">Exigem ajustes</span></button>
-              <button class="stat-card" type="button" data-status="Aprovada" aria-pressed="false"><span class="stat-topline"><span class="stat-label">Aprovadas</span><span class="status-dot approved"></span></span><strong class="stat-value" data-stat="Aprovada">0</strong><span class="stat-help">Processo concluído</span></button>
-              <button class="stat-card" type="button" data-status="Rejeitada" aria-pressed="false"><span class="stat-topline"><span class="stat-label">Rejeitadas</span><span class="status-dot rejected"></span></span><strong class="stat-value" data-stat="Rejeitada">0</strong><span class="stat-help">Encerradas sem aprovação</span></button>
+
+  <div
+    class="app-shell"
+    id="appShell"
+  >
+
+
+    <div
+      id="sidebarMount"
+    ></div>
+
+
+    <div
+      class="sidebar-overlay"
+      id="sidebarOverlay"
+      aria-hidden="true"
+    ></div>
+
+
+    <div
+      class="workspace"
+    >
+
+
+      <div
+        id="headerMount"
+      ></div>
+
+
+      <main
+        class="main-content"
+      >
+
+
+        <div
+          class="page-container"
+        >
+
+
+          <!-- =================================================
+               CABEÇALHO
+               ================================================= -->
+
+          <section
+            class="page-heading"
+            aria-labelledby="pageTitle"
+          >
+
+
+            <div>
+
+              <p
+                class="eyebrow"
+              >
+                Gerenciamento
+              </p>
+
+
+              <h2
+                id="pageTitle"
+              >
+                Acompanhe suas solicitações F4
+              </h2>
+
+
+              <p
+                class="page-description"
+              >
+                Consulte o andamento, identifique pendências e acesse rapidamente as F4 que precisam da sua atenção.
+              </p>
+
             </div>
+
+
+            <button
+              class="primary-button"
+              type="button"
+              id="newF4Button"
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"
+                />
+              </svg>
+
+              Nova F4
+
+            </button>
+
+
           </section>
 
-          <section class="filter-panel" aria-labelledby="filterTitle">
-            <div class="filter-heading"><div><h3 id="filterTitle">Encontrar F4</h3><p>Use a busca ou refine pelos filtros.</p></div><button class="text-button" type="button" id="clearFilters">Limpar filtros</button></div>
-            <div class="filters-grid">
-              <label class="field"><span>Buscar</span><div class="input-shell"><svg viewBox="0 0 24 24"><path d="m20.71 19.29-4.39-4.39A7.5 7.5 0 1 0 14.9 16.32l4.39 4.39 1.42-1.42ZM5 10.5A5.5 5.5 0 1 1 10.5 16 5.51 5.51 0 0 1 5 10.5Z"/></svg><input id="searchInput" type="search" placeholder="Título, descrição, proprietário..." autocomplete="off"></div></label>
-              <label class="field"><span>Status</span><select id="statusFilter"><option value="Todos">Todos</option><option value="Rascunho">Rascunho</option><option value="Submetida">Submetida</option><option value="Devolvida">Devolvida</option><option value="Aprovada">Aprovada</option><option value="Rejeitada">Rejeitada</option></select></label>
-              <label class="field"><span>Atualização</span><select id="dateFilter"><option value="Todos">Qualquer data</option><option value="Hoje">Hoje</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option></select></label>
-              <label class="field"><span>Setor atual</span><select id="sectorFilter"><option value="Todos">Todos os setores</option><option value="Engenharia">Engenharia</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Financeiro">Financeiro</option></select></label>
+
+          <!-- =================================================
+               RESUMO
+               ================================================= -->
+
+          <section
+            aria-labelledby="summaryTitle"
+          >
+
+
+            <div
+              class="section-heading compact-heading"
+            >
+
+              <div>
+
+                <p
+                  class="eyebrow"
+                >
+                  Visão rápida
+                </p>
+
+
+                <h3
+                  id="summaryTitle"
+                >
+                  Resumo geral
+                </h3>
+
+              </div>
+
             </div>
+
+
+            <div
+              class="stats-grid"
+              id="statsGrid"
+            >
+
+
+              <button
+                class="stat-card is-selected"
+                type="button"
+                data-status="Todos"
+                aria-pressed="true"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+                  <span
+                    class="stat-label"
+                  >
+                    Todas as F4
+                  </span>
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Todos"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Total no período
+                </span>
+
+              </button>
+
+
+              <button
+                class="stat-card"
+                type="button"
+                data-status="Rascunho"
+                aria-pressed="false"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+
+                  <span
+                    class="stat-label"
+                  >
+                    Rascunho
+                  </span>
+
+                  <span
+                    class="status-dot draft"
+                  ></span>
+
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Rascunho"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Ainda não submetidas
+                </span>
+
+              </button>
+
+
+              <button
+                class="stat-card"
+                type="button"
+                data-status="Submetida"
+                aria-pressed="false"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+
+                  <span
+                    class="stat-label"
+                  >
+                    Submetidas
+                  </span>
+
+                  <span
+                    class="status-dot submitted"
+                  ></span>
+
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Submetida"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Em fluxo de análise
+                </span>
+
+              </button>
+
+
+              <button
+                class="stat-card"
+                type="button"
+                data-status="Devolvida"
+                aria-pressed="false"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+
+                  <span
+                    class="stat-label"
+                  >
+                    Devolvidas
+                  </span>
+
+                  <span
+                    class="status-dot returned"
+                  ></span>
+
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Devolvida"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Exigem ajustes
+                </span>
+
+              </button>
+
+
+              <button
+                class="stat-card"
+                type="button"
+                data-status="Aprovada"
+                aria-pressed="false"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+
+                  <span
+                    class="stat-label"
+                  >
+                    Aprovadas
+                  </span>
+
+                  <span
+                    class="status-dot approved"
+                  ></span>
+
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Aprovada"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Processo concluído
+                </span>
+
+              </button>
+
+
+              <button
+                class="stat-card"
+                type="button"
+                data-status="Rejeitada"
+                aria-pressed="false"
+              >
+
+                <span
+                  class="stat-topline"
+                >
+
+                  <span
+                    class="stat-label"
+                  >
+                    Rejeitadas
+                  </span>
+
+                  <span
+                    class="status-dot rejected"
+                  ></span>
+
+                </span>
+
+
+                <strong
+                  class="stat-value"
+                  data-stat="Rejeitada"
+                >
+                  0
+                </strong>
+
+
+                <span
+                  class="stat-help"
+                >
+                  Encerradas sem aprovação
+                </span>
+
+              </button>
+
+
+            </div>
+
+
           </section>
 
-          <section class="table-card" aria-labelledby="tableTitle">
-            <div class="table-card-header"><div><h3 id="tableTitle">F4 encontradas</h3><p><strong id="resultCount">0</strong> registros exibidos</p></div><button class="secondary-button" type="button" id="exportButton"><svg viewBox="0 0 24 24"><path d="M11 3h2v10.17l3.59-3.58L18 11l-6 6-6-6 1.41-1.41L11 13.17V3Zm-6 16h14v2H5v-2Z"/></svg>Exportar</button></div>
-            <div class="table-wrapper"><table class="data-table"><thead><tr><th>ID</th><th>F4</th><th>Status</th><th>Última atualização</th><th>Proprietário</th><th>Responsável atual</th><th>Setor atual</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-            <div class="empty-state" id="emptyState" hidden><h4>Nenhuma F4 encontrada</h4><p>Altere os filtros ou limpe a busca para visualizar outros registros.</p></div>
+
+          <!-- =================================================
+               FILTROS
+               ================================================= -->
+
+          <section
+            class="filter-panel"
+            aria-labelledby="filterTitle"
+          >
+
+
+            <div
+              class="filter-heading"
+            >
+
+
+              <div>
+
+                <h3
+                  id="filterTitle"
+                >
+                  Encontrar F4
+                </h3>
+
+
+                <p>
+                  Use a busca ou refine pelos filtros.
+                </p>
+
+              </div>
+
+
+              <button
+                class="text-button"
+                type="button"
+                id="clearFilters"
+              >
+                Limpar filtros
+              </button>
+
+
+            </div>
+
+
+            <div
+              class="filters-grid"
+            >
+
+
+              <label
+                class="field"
+              >
+
+                <span>
+                  Buscar
+                </span>
+
+
+                <div
+                  class="input-shell"
+                >
+
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+
+                    <path
+                      d="m20.71 19.29-4.39-4.39A7.5 7.5 0 1 0 14.9 16.32l4.39 4.39 1.42-1.42ZM5 10.5A5.5 5.5 0 1 1 10.5 16 5.51 5.51 0 0 1 5 10.5Z"
+                    />
+
+                  </svg>
+
+
+                  <input
+                    id="searchInput"
+                    type="search"
+                    placeholder="Código, título, fornecedor, proprietário..."
+                    autocomplete="off"
+                  >
+
+
+                </div>
+
+
+              </label>
+
+
+              <label
+                class="field"
+              >
+
+                <span>
+                  Status
+                </span>
+
+
+                <select
+                  id="statusFilter"
+                >
+
+                  <option
+                    value="Todos"
+                  >
+                    Todos
+                  </option>
+
+                  <option
+                    value="Rascunho"
+                  >
+                    Rascunho
+                  </option>
+
+                  <option
+                    value="Submetida"
+                  >
+                    Submetida
+                  </option>
+
+                  <option
+                    value="Devolvida"
+                  >
+                    Devolvida
+                  </option>
+
+                  <option
+                    value="Aprovada"
+                  >
+                    Aprovada
+                  </option>
+
+                  <option
+                    value="Rejeitada"
+                  >
+                    Rejeitada
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label
+                class="field"
+              >
+
+                <span>
+                  Atualização
+                </span>
+
+
+                <select
+                  id="dateFilter"
+                >
+
+                  <option
+                    value="Todos"
+                  >
+                    Qualquer data
+                  </option>
+
+                  <option
+                    value="Hoje"
+                  >
+                    Hoje
+                  </option>
+
+                  <option
+                    value="7"
+                  >
+                    Últimos 7 dias
+                  </option>
+
+                  <option
+                    value="30"
+                  >
+                    Últimos 30 dias
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label
+                class="field"
+              >
+
+                <span>
+                  Setor atual
+                </span>
+
+
+                <select
+                  id="sectorFilter"
+                >
+
+                  <option
+                    value="Todos"
+                  >
+                    Todos os setores
+                  </option>
+
+                  <option
+                    value="Engenharia"
+                  >
+                    Engenharia
+                  </option>
+
+                  <option
+                    value="Comercial"
+                  >
+                    Comercial
+                  </option>
+
+                  <option
+                    value="Compras"
+                  >
+                    Compras
+                  </option>
+
+                  <option
+                    value="Financeiro"
+                  >
+                    Financeiro
+                  </option>
+
+                </select>
+
+              </label>
+
+
+            </div>
+
+
           </section>
+
+
+          <!-- =================================================
+               TABELA
+               ================================================= -->
+
+          <section
+            class="table-card"
+            aria-labelledby="tableTitle"
+          >
+
+
+            <div
+              class="table-card-header"
+            >
+
+
+              <div>
+
+                <h3
+                  id="tableTitle"
+                >
+                  F4 encontradas
+                </h3>
+
+
+                <p>
+
+                  <strong
+                    id="resultCount"
+                  >
+                    0
+                  </strong>
+
+                  registros exibidos
+
+                </p>
+
+              </div>
+
+
+              <button
+                class="secondary-button"
+                type="button"
+                id="exportButton"
+              >
+
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+
+                  <path
+                    d="M11 3h2v10.17l3.59-3.58L18 11l-6 6-6-6 1.41-1.41L11 13.17V3Zm-6 16h14v2H5v-2Z"
+                  />
+
+                </svg>
+
+                Exportar
+
+              </button>
+
+
+            </div>
+
+
+            <div
+              class="table-wrapper"
+            >
+
+
+              <table
+                class="data-table"
+              >
+
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      Código F4
+                    </th>
+
+                    <th>
+                      F4
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                    <th>
+                      Última atualização
+                    </th>
+
+                    <th>
+                      Proprietário
+                    </th>
+
+                    <th>
+                      Responsável atual
+                    </th>
+
+                    <th>
+                      Setor atual
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody
+                  id="tableBody"
+                ></tbody>
+
+
+              </table>
+
+
+            </div>
+
+
+            <div
+              class="empty-state"
+              id="emptyState"
+              hidden
+            >
+
+              <h4>
+                Nenhuma F4 encontrada
+              </h4>
+
+
+              <p>
+                Altere os filtros ou limpe a busca para visualizar outros registros.
+              </p>
+
+            </div>
+
+
+          </section>
+
+
         </div>
+
+
       </main>
+
+
     </div>
+
+
   </div>
-  <script type="module" src="./js/pages/minhas-f4.js"></script>
+
+
+  <script
+    type="module"
+    src="./js/pages/minhas-f4.js"
+  ></script>
+
+
 </body>
+
 </html>

@@ -680,7 +680,7 @@ select:focus {
 
 .data-table th:nth-child(1),
 .data-table td:nth-child(1) {
-  width: 75px;
+  width: 100px;
 }
 
 .data-table th:nth-child(2),
@@ -869,6 +869,7 @@ select:focus {
    ========================================================= */
 
 .empty-state {
+  
   padding:
     60px 24px;
 

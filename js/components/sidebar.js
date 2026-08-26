@@ -1,6 +1,18 @@
 const navItems = [
-  { id: 'dashboard', label: 'Visão geral', href: './index.html', icon: './assets/icons/visao-geral.png' },
-  { id: 'nova-f4', label: 'Nova F4', href: './nova-f4.html', icon: './assets/icons/nova-f4.png' },
+  {
+    id: 'dashboard',
+    label: 'Visão geral',
+    href: './index.html',
+    icon: './assets/icons/visao-geral.png'
+  },
+
+  {
+    id: 'nova-f4',
+    label: 'Nova F4',
+    href: './nova-f4.html',
+    icon: './assets/icons/nova-f4.png'
+  },
+  
   { id: 'minhas-f4', label: 'Minhas F4', href: './minhas-f4.html', icon: './assets/icons/minhas-f4.png' },
   { id: 'pendencias', label: 'Pendências', href: './minhas-f4.html?attention=1', icon: './assets/icons/pendencias.png' },
   { id: 'historico', label: 'Histórico', href: '#', icon: './assets/icons/historico.png', placeholder: true },
