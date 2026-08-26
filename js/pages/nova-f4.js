@@ -10,6 +10,146 @@ const description = document.querySelector('#description');
 const changeCause = document.querySelector('#changeCause');
 const descriptionCount = document.querySelector('#descriptionCount');
 const causeCount = document.querySelector('#causeCount');
+const stepper = document.querySelector('#formStepper');
+const stepperShell = document.querySelector('#stepperShell');
+const steps = stepper ? [...stepper.querySelectorAll('.step')] : [];
+
+
+let stepperFrame = null;
+
+function getScrollBehavior() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
+function updateStepperPresentation() {
+  if (!stepper || !stepperShell || !steps.length) return;
+
+  const viewport = stepper.getBoundingClientRect();
+  const viewportCenter = viewport.left + (viewport.width / 2);
+  const fadeDistance = Math.max(viewport.width * .52, 1);
+
+  steps.forEach(step => {
+    const rect = step.getBoundingClientRect();
+    const itemCenter = rect.left + (rect.width / 2);
+    const distance = Math.abs(itemCenter - viewportCenter);
+    const normalizedDistance = Math.min(distance / fadeDistance, 1);
+
+    let emphasis = 1 - (normalizedDistance * .58);
+
+    if (step.classList.contains('is-active')) {
+      emphasis = Math.max(emphasis, .78);
+    }
+
+    step.style.setProperty('--step-emphasis', emphasis.toFixed(3));
+  });
+
+  const maxScroll = Math.max(stepper.scrollWidth - stepper.clientWidth, 0);
+  stepperShell.classList.toggle('has-left-overflow', stepper.scrollLeft > 4);
+  stepperShell.classList.toggle('has-right-overflow', stepper.scrollLeft < maxScroll - 4);
+}
+
+function requestStepperUpdate() {
+  if (stepperFrame !== null) return;
+
+  stepperFrame = requestAnimationFrame(() => {
+    stepperFrame = null;
+    updateStepperPresentation();
+  });
+}
+
+function scrollStepperBy(direction) {
+  if (!stepper) return;
+
+  const activeWidth = steps[0]?.getBoundingClientRect().width || 210;
+  const gap = Number.parseFloat(getComputedStyle(stepper).columnGap) || 16;
+
+  stepper.scrollBy({
+    left: direction * (activeWidth + gap),
+    behavior: getScrollBehavior()
+  });
+}
+
+function setupStepperNavigation() {
+  if (!stepper || !stepperShell) return;
+
+  stepper.addEventListener('scroll', requestStepperUpdate, { passive: true });
+
+  stepper.addEventListener('wheel', event => {
+    const maxScroll = stepper.scrollWidth - stepper.clientWidth;
+    if (maxScroll <= 0) return;
+
+    const verticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX);
+    if (!verticalIntent) return;
+
+    const movingRight = event.deltaY > 0;
+    const canMove = movingRight
+      ? stepper.scrollLeft < maxScroll - 1
+      : stepper.scrollLeft > 1;
+
+    if (!canMove) return;
+
+    event.preventDefault();
+    stepper.scrollLeft += event.deltaY;
+  }, { passive: false });
+
+  stepper.addEventListener('keydown', event => {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      scrollStepperBy(1);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      scrollStepperBy(-1);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      stepper.scrollTo({ left: 0, behavior: getScrollBehavior() });
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      stepper.scrollTo({ left: stepper.scrollWidth, behavior: getScrollBehavior() });
+    }
+  });
+
+  if ('ResizeObserver' in window) {
+    const resizeObserver = new ResizeObserver(requestStepperUpdate);
+    resizeObserver.observe(stepper);
+  } else {
+    window.addEventListener('resize', requestStepperUpdate, { passive: true });
+  }
+
+  const activeStep = stepper.querySelector('.step.is-active');
+  if (activeStep && !activeStep.matches(':first-child')) {
+    activeStep.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+  }
+
+  if ('MutationObserver' in window) {
+    const activeStepObserver = new MutationObserver(() => {
+      const currentStep = stepper.querySelector('.step.is-active, .step[aria-current="step"]');
+      currentStep?.scrollIntoView({
+        behavior: getScrollBehavior(),
+        inline: 'center',
+        block: 'nearest'
+      });
+      requestStepperUpdate();
+    });
+
+    steps.forEach(step => {
+      activeStepObserver.observe(step, {
+        attributes: true,
+        attributeFilter: ['class', 'aria-current']
+      });
+    });
+  }
+
+  requestStepperUpdate();
+}
 
 const DRAFT_KEY = 'f4-new-draft-step-1';
 
@@ -111,5 +251,6 @@ form.addEventListener('submit', event => {
   showToast('Dados gerais validados. A etapa Fornecedor será conectada na próxima implementação.');
 });
 
+setupStepperNavigation();
 restoreDraft();
 updateCounters();
