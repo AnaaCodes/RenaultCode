@@ -45,7 +45,7 @@
   width: 92px;
   height: 3px;
   border-radius: 999px;
-  background: #efdf00;
+  background: rgb(79, 22, 184);;
 }
 
 .request-number {
@@ -149,8 +149,8 @@
 }
 
 .step.is-active .step-number {
-  background: #efdf00;
-  color: #111;
+  background: rgba(79, 22, 184);
+  color: #ffffff;
 }
 
 .step.is-active .step-content strong {
