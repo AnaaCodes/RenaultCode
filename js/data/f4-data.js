@@ -104,9 +104,9 @@ export const F4_DATA = [
 
     updatedAt: '2026-08-20',
 
-    owner: 'Carlos Braatz',
+    owner: 'Você',
     responsible: 'Você',
-    sector: 'Comercial',
+    sector: ' ---- ',
 
     stage: 'Rascunho',
     dueDate: '2026-09-03',
@@ -152,7 +152,7 @@ export const F4_DATA = [
 
     owner: 'Você',
     responsible: 'Você',
-    sector: 'Financeiro',
+    sector: ' ---- ',
 
     stage: 'Rascunho',
     dueDate: '2026-09-06',
