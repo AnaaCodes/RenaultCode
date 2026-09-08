@@ -757,8 +757,11 @@
       var(--topbar-height)
     );
 
+  /* O header é fixed e não ocupa espaço no fluxo.
+     Somamos sua altura ao espaçamento superior para que
+     o primeiro conteúdo apareça totalmente abaixo dele. */
   padding:
-    32px
+    calc(var(--topbar-height) + 32px)
     clamp(
       24px,
       4vw,
@@ -1120,7 +1123,7 @@
 
   .main-content {
     padding:
-      24px
+      calc(var(--topbar-height) + 24px)
       16px
       42px;
   }
