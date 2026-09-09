@@ -9,6 +9,7 @@ export const USER_PROFILES = {
     initials: 'AM',
     permissions: {
       createF4: true,
+      viewMyF4: true,
       viewProjects: false
     }
   },
@@ -20,6 +21,7 @@ export const USER_PROFILES = {
     initials: 'MO',
     permissions: {
       createF4: false,
+      viewMyF4: false,
       viewProjects: true
     }
   }
