@@ -28,19 +28,34 @@
             <p>Monitore o andamento dos projetos, o status das F4, prazos, fornecedores e o impacto econômico.</p>
           </section>
 
-          <section class="project-summary-grid" aria-label="Resumo dos projetos">
-            <article class="project-summary-card"><span class="summary-icon purple">▣</span><div><small>Projetos ativos</small><strong data-summary="active">0</strong><p>Em desenvolvimento</p></div></article>
-            <article class="project-summary-card"><span class="summary-icon purple">▤</span><div><small>F4 totais</small><strong data-summary="f4">0</strong><p>Em todos os projetos</p></div></article>
-            <article class="project-summary-card"><span class="summary-icon blue">●</span><div><small>Em análise</small><strong data-summary="analysis">0</strong><p>Em fluxo de análise</p></div></article>
-            <article class="project-summary-card"><span class="summary-icon orange">◷</span><div><small>Aguardando aprovação</small><strong data-summary="approval">0</strong><p>Aguardando decisão</p></div></article>
-            <article class="project-summary-card"><span class="summary-icon red">!</span><div><small>Devolvidas</small><strong data-summary="returned">0</strong><p>Precisam de ajuste</p></div></article>
-            <article class="project-summary-card impact"><span class="summary-icon green">▥</span><div><small>Impacto econômico</small><strong data-summary="impact">€ 0</strong><p>Estimativa total</p></div></article>
+          <section class="project-summary-grid" aria-label="Filtros por fase dos projetos">
+            <button class="project-summary-card is-active" type="button" data-project-filter="active" aria-pressed="true">
+              <span class="summary-icon purple"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l1-5a2 2 0 0 1 2-1.5h12A2 2 0 0 1 20 6l1 5"/><path d="M5 11h14a2 2 0 0 1 2 2v5h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3v-5a2 2 0 0 1 2-2Z"/><path d="M7 14h.01M17 14h.01"/></svg></span><div><small>Projetos ativos</small><strong data-summary="active">0</strong><p>Todos em andamento</p></div>
+            </button>
+            <button class="project-summary-card" type="button" data-project-filter="creation" aria-pressed="false">
+              <span class="summary-icon purple"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><div><small>Em criação</small><strong data-summary="creation">0</strong><p>Fase inicial</p></div>
+            </button>
+            <button class="project-summary-card" type="button" data-project-filter="development" aria-pressed="false">
+              <span class="summary-icon blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2v6h6"/><path d="M16 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6Z"/><path d="M8 13h8M8 17h6"/></svg></span><div><small>Em desenvolvimento</small><strong data-summary="development">0</strong><p>Em desenvolvimento</p></div>
+            </button>
+            <button class="project-summary-card" type="button" data-project-filter="industrialization" aria-pressed="false">
+              <span class="summary-icon orange"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.12 2.12 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9Z"/></svg></span><div><small>Industrialização</small><strong data-summary="industrialization">0</strong><p>Em industrialização</p></div>
+            </button>
+            <button class="project-summary-card" type="button" data-project-filter="validation" aria-pressed="false">
+              <span class="summary-icon blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.14.38.37.72.66 1 .3.28.69.43 1.1.4H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51.6Z"/></svg></span><div><small>Validação</small><strong data-summary="validation">0</strong><p>Em validação</p></div>
+            </button>
+            <button class="project-summary-card" type="button" data-project-filter="closed" aria-pressed="false">
+              <span class="summary-icon red"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></span><div><small>Encerrado</small><strong data-summary="closed">0</strong><p>Projetos concluídos</p></div>
+            </button>
+            <button class="project-summary-card impact" type="button" data-project-filter="impact" aria-pressed="false">
+              <span class="summary-icon green"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M7 9h.01M17 15h.01"/><circle cx="12" cy="12" r="2.5"/></svg></span><div><small>Impacto econômico</small><strong data-summary="impact">R$ 0</strong><p>Estimativa total</p></div>
+            </button>
           </section>
 
           <section class="projects-section" aria-labelledby="myProjectsTitle">
             <div class="projects-section-heading">
               <h2 id="myProjectsTitle">Meus projetos</h2>
-              <button class="primary-button compact-project-action" id="newProjectButton" type="button"><span>＋</span> Novo projeto</button>
+              <button class="primary-button compact-project-action" id="newProjectButton" type="button"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span> Novo projeto</button>
             </div>
             <div class="projects-grid" id="projectsGrid"></div>
           </section>

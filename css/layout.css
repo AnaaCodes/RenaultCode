@@ -760,9 +760,9 @@
   padding:
     32px
     clamp(
-      24px,
-      4vw,
-      56px
+      16px,
+      2vw,
+      28px
     )
     58px;
 
@@ -1345,5 +1345,31 @@
 
   .main-content {
     padding-top: calc(var(--topbar-height) + 24px);
+  }
+}
+
+/* =========================================================
+   AJUSTE DE LARGURA DO HEADER FIXO
+   Mantém o cabeçalho fixo sem ultrapassar a área útil ao
+   considerar a largura real da sidebar.
+   ========================================================= */
+@media (min-width: 1001px) {
+  .topbar {
+    left: var(--sidebar-width);
+    right: 0;
+    width: auto;
+    transition: left .28s cubic-bezier(.2, .8, .2, 1);
+  }
+
+  .app-shell.sidebar-collapsed .topbar {
+    left: var(--sidebar-collapsed-width);
+  }
+}
+
+@media (max-width: 1000px) {
+  .topbar {
+    left: 0;
+    right: 0;
+    width: auto;
   }
 }

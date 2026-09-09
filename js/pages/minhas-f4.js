@@ -3,6 +3,10 @@ import {
 } from '../core/app-shell.js';
 
 import {
+  getActiveProfile
+} from '../core/user-session.js';
+
+import {
   getAllF4,
   getF4Code,
   openF4
@@ -13,9 +17,15 @@ import {
    ESTRUTURA DA PÁGINA
    ========================================================= */
 
+const activeProfile =
+  getActiveProfile();
+
+const isManager =
+  activeProfile.id === 'manager';
+
 mountAppShell({
   activePage: 'minhas-f4',
-  title: 'Minhas F4'
+  title: isManager ? 'Acompanhar F4s' : 'Minhas F4'
 });
 
 
@@ -54,6 +64,8 @@ const sectorFilter =
 const statsGrid =
   document.querySelector('#statsGrid');
 
+let activeManagerFilter = 'all';
+
 
 /* =========================================================
    HELPERS
@@ -80,11 +92,187 @@ const formatDate = iso =>
   ).toLocaleDateString('pt-BR');
 
 
+const isFinalStatus = item =>
+  ['Aprovada', 'Rejeitada']
+    .includes(item.status);
+
+
+const managerFilterMatches =
+  (item, filter) => {
+    switch (filter) {
+      case 'draft':
+        // Para o gerente, Draft representa todas as F4 ainda em andamento.
+        return !isFinalStatus(item);
+
+      case 'submitted':
+        // Submetidas: F4 que aguardam validação.
+        return item.status === 'Submetida';
+
+      case 'technical':
+        return (
+          item.status === 'Submetida' &&
+          item.sector === 'Engenharia'
+        );
+
+      case 'commercial':
+        return (
+          item.status === 'Submetida' &&
+          ['Compras', 'Comercial', 'Financeiro']
+            .includes(item.sector)
+        );
+
+      case 'rejected':
+        return item.status === 'Rejeitada';
+
+      case 'approved':
+        return item.status === 'Aprovada';
+
+      case 'approval':
+        return Boolean(item.requiresMyApproval);
+
+      case 'all':
+      default:
+        return true;
+    }
+  };
+
+
+/* =========================================================
+   VISÃO DO GERENTE
+   ========================================================= */
+
+function configureManagerView() {
+  if (!isManager) return;
+
+  document.title =
+    'Acompanhar F4s | Sistema F4';
+
+  const eyebrow =
+    document.querySelector('.page-heading .eyebrow');
+
+  const pageTitle =
+    document.querySelector('#pageTitle');
+
+  const description =
+    document.querySelector('.page-description');
+
+  const summaryTitle =
+    document.querySelector('#summaryTitle');
+
+  if (eyebrow) {
+    eyebrow.textContent = 'Acompanhamento';
+  }
+
+  if (pageTitle) {
+    pageTitle.textContent = 'Acompanhe as F4 dos seus projetos';
+  }
+
+  if (description) {
+    description.textContent =
+      'Monitore o fluxo das F4, acompanhe as etapas de análise e identifique rapidamente o que precisa da sua aprovação.';
+  }
+
+  if (summaryTitle) {
+    summaryTitle.textContent = 'Visão geral das F4';
+  }
+
+  statsGrid.classList.add('manager-stats-grid');
+
+  statsGrid.innerHTML = `
+    <button class="stat-card is-selected" type="button" data-manager-filter="all" aria-pressed="true">
+      <span class="stat-topline"><span class="stat-label">Todas as F4</span></span>
+      <strong class="stat-value" data-manager-stat="all">0</strong>
+      <span class="stat-help">Todas as F4 acompanhadas</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="draft" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Draft</span><span class="status-dot draft"></span></span>
+      <strong class="stat-value" data-manager-stat="draft">0</strong>
+      <span class="stat-help">F4 ainda em andamento</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="submitted" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Submetidas</span><span class="status-dot submitted"></span></span>
+      <strong class="stat-value" data-manager-stat="submitted">0</strong>
+      <span class="stat-help">Aguardando validação</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="technical" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Análise técnica</span><span class="status-dot technical"></span></span>
+      <strong class="stat-value" data-manager-stat="technical">0</strong>
+      <span class="stat-help">Validação da engenharia</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="commercial" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Análise comercial</span><span class="status-dot commercial"></span></span>
+      <strong class="stat-value" data-manager-stat="commercial">0</strong>
+      <span class="stat-help">Validação comercial</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="rejected" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Rejeitadas</span><span class="status-dot rejected"></span></span>
+      <strong class="stat-value" data-manager-stat="rejected">0</strong>
+      <span class="stat-help">Encerradas sem aprovação</span>
+    </button>
+
+    <button class="stat-card" type="button" data-manager-filter="approved" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Aprovadas</span><span class="status-dot approved"></span></span>
+      <strong class="stat-value" data-manager-stat="approved">0</strong>
+      <span class="stat-help">Processo concluído</span>
+    </button>
+
+    <button class="stat-card manager-approval-card" type="button" data-manager-filter="approval" aria-pressed="false">
+      <span class="stat-topline"><span class="stat-label">Aguardando sua aprovação</span><span class="status-dot approval"></span></span>
+      <strong class="stat-value" data-manager-stat="approval">0</strong>
+      <span class="stat-help">Requerem sua decisão</span>
+    </button>
+  `;
+
+  statusFilter.innerHTML = `
+    <option value="all">Todos os fluxos</option>
+    <option value="draft">Draft — em andamento</option>
+    <option value="submitted">Submetidas — aguardando validação</option>
+    <option value="technical">Análise técnica</option>
+    <option value="commercial">Análise comercial</option>
+    <option value="rejected">Rejeitadas</option>
+    <option value="approved">Aprovadas</option>
+    <option value="approval">Aguardando sua aprovação</option>
+  `;
+}
+
+
 /* =========================================================
    ESTATÍSTICAS
    ========================================================= */
 
 function syncStats() {
+  if (isManager) {
+    [
+      'all',
+      'draft',
+      'submitted',
+      'technical',
+      'commercial',
+      'rejected',
+      'approved',
+      'approval'
+    ].forEach(filter => {
+      const element =
+        document.querySelector(
+          `[data-manager-stat="${filter}"]`
+        );
+
+      if (!element) return;
+
+      element.textContent =
+        data.filter(item =>
+          managerFilterMatches(item, filter)
+        ).length;
+    });
+
+    return;
+  }
+
   const counts =
     data.reduce(
       (accumulator, item) => {
@@ -99,11 +287,9 @@ function syncStats() {
       {}
     );
 
-
   document.querySelector(
     '[data-stat="Todos"]'
   ).textContent = data.length;
-
 
   [
     'Rascunho',
@@ -112,12 +298,15 @@ function syncStats() {
     'Aprovada',
     'Rejeitada'
   ].forEach(status => {
+    const element =
+      document.querySelector(
+        `[data-stat="${status}"]`
+      );
 
-    document.querySelector(
-      `[data-stat="${status}"]`
-    ).textContent =
-      counts[status] || 0;
-
+    if (element) {
+      element.textContent =
+        counts[status] || 0;
+    }
   });
 }
 
@@ -141,12 +330,10 @@ function filteredData() {
   const dateValue =
     dateFilter.value;
 
-
   const params =
     new URLSearchParams(
       location.search
     );
-
 
   const dueSoon =
     params.get('due') === 'soon';
@@ -154,23 +341,14 @@ function filteredData() {
   const approvalMe =
     params.get('approval') === 'me';
 
-
   const today =
     new Date(
       '2026-08-25T12:00:00'
     );
 
-
   return data.filter(item => {
-
-    /*
-     * Agora o código da F4 e o fornecedor
-     * também entram na pesquisa.
-     */
-
     const f4Code =
       getF4Code(item);
-
 
     const haystack =
       normalize([
@@ -181,9 +359,10 @@ function filteredData() {
         item.description,
         item.owner,
         item.responsible,
-        item.sector
+        item.sector,
+        item.stage,
+        item.status
       ].join(' '));
-
 
     if (
       query &&
@@ -192,14 +371,21 @@ function filteredData() {
       return false;
     }
 
-
-    if (
+    if (isManager) {
+      if (
+        !managerFilterMatches(
+          item,
+          activeManagerFilter
+        )
+      ) {
+        return false;
+      }
+    } else if (
       status !== 'Todos' &&
       item.status !== status
     ) {
       return false;
     }
-
 
     if (
       sector !== 'Todos' &&
@@ -208,7 +394,6 @@ function filteredData() {
       return false;
     }
 
-
     if (
       approvalMe &&
       !item.requiresMyApproval
@@ -216,13 +401,11 @@ function filteredData() {
       return false;
     }
 
-
     if (dueSoon) {
       const difference =
         new Date(
           `${item.dueDate}T12:00:00`
         ) - today;
-
 
       if (
         difference < 0 ||
@@ -233,7 +416,6 @@ function filteredData() {
       }
     }
 
-
     if (
       dateValue !== 'Todos'
     ) {
@@ -242,13 +424,11 @@ function filteredData() {
           `${item.updatedAt}T12:00:00`
         );
 
-
       const differenceInDays =
         Math.floor(
           (today - updated) /
           86400000
         );
-
 
       if (
         dateValue === 'Hoje' &&
@@ -257,14 +437,12 @@ function filteredData() {
         return false;
       }
 
-
       if (
         dateValue === '7' &&
         differenceInDays > 7
       ) {
         return false;
       }
-
 
       if (
         dateValue === '30' &&
@@ -273,7 +451,6 @@ function filteredData() {
         return false;
       }
     }
-
 
     return true;
   });
@@ -288,22 +465,17 @@ function render() {
   const items =
     filteredData();
 
-
   resultCount.textContent =
     items.length;
-
 
   emptyState.hidden =
     items.length !== 0;
 
-
   tableBody.innerHTML =
     items
       .map(item => {
-
         const f4Code =
           getF4Code(item);
-
 
         return `
           <tr
@@ -312,7 +484,6 @@ function render() {
             data-id="${item.id}"
             aria-label="Abrir F4 ${f4Code}"
           >
-
             <td class="id-cell">
               ${f4Code}
             </td>
@@ -350,49 +521,36 @@ function render() {
             <td>
               ${item.sector}
             </td>
-
           </tr>
         `;
       })
       .join('');
 
-
-  /*
-   * Toda a linha abre a F4.
-   */
-
   tableBody
     .querySelectorAll('tr')
     .forEach(row => {
-
       const open = () =>
         openF4(
           row.dataset.id
         );
-
 
       row.addEventListener(
         'click',
         open
       );
 
-
       row.addEventListener(
         'keydown',
         event => {
-
           if (
             event.key === 'Enter' ||
             event.key === ' '
           ) {
             event.preventDefault();
-
             open();
           }
-
         }
       );
-
     });
 }
 
@@ -401,33 +559,53 @@ function render() {
    SELEÇÃO DOS CARDS
    ========================================================= */
 
-function selectStat(status) {
+function selectSupplierStat(status) {
   statusFilter.value =
     status;
-
 
   statsGrid
     .querySelectorAll('.stat-card')
     .forEach(card => {
-
       const selected =
         card.dataset.status ===
         status;
-
 
       card.classList.toggle(
         'is-selected',
         selected
       );
 
+      card.setAttribute(
+        'aria-pressed',
+        String(selected)
+      );
+    });
+
+  render();
+}
+
+
+function selectManagerStat(filter) {
+  activeManagerFilter = filter;
+  statusFilter.value = filter;
+
+  statsGrid
+    .querySelectorAll('.stat-card')
+    .forEach(card => {
+      const selected =
+        card.dataset.managerFilter ===
+        filter;
+
+      card.classList.toggle(
+        'is-selected',
+        selected
+      );
 
       card.setAttribute(
         'aria-pressed',
         String(selected)
       );
-
     });
-
 
   render();
 }
@@ -437,19 +615,26 @@ function selectStat(status) {
    EVENTOS DOS CARDS
    ========================================================= */
 
-statsGrid
-  .querySelectorAll('.stat-card')
-  .forEach(card => {
-
-    card.addEventListener(
-      'click',
-      () =>
-        selectStat(
-          card.dataset.status
-        )
-    );
-
-  });
+function bindStatEvents() {
+  statsGrid
+    .querySelectorAll('.stat-card')
+    .forEach(card => {
+      card.addEventListener(
+        'click',
+        () => {
+          if (isManager) {
+            selectManagerStat(
+              card.dataset.managerFilter
+            );
+          } else {
+            selectSupplierStat(
+              card.dataset.status
+            );
+          }
+        }
+      );
+    });
+}
 
 
 /* =========================================================
@@ -462,30 +647,31 @@ statsGrid
   dateFilter,
   sectorFilter
 ].forEach(element => {
-
   const eventName =
     element.tagName === 'INPUT'
       ? 'input'
       : 'change';
 
-
   element.addEventListener(
     eventName,
     () => {
-
       if (
         element === statusFilter
       ) {
-        selectStat(
-          statusFilter.value
-        );
+        if (isManager) {
+          selectManagerStat(
+            statusFilter.value
+          );
+        } else {
+          selectSupplierStat(
+            statusFilter.value
+          );
+        }
       } else {
         render();
       }
-
     }
   );
-
 });
 
 
@@ -498,11 +684,14 @@ document
   .addEventListener(
     'click',
     () => {
-
       searchInput.value = '';
 
-      statusFilter.value =
-        'Todos';
+      if (isManager) {
+        activeManagerFilter = 'all';
+        statusFilter.value = 'all';
+      } else {
+        statusFilter.value = 'Todos';
+      }
 
       dateFilter.value =
         'Todos';
@@ -510,179 +699,65 @@ document
       sectorFilter.value =
         'Todos';
 
-
       history.replaceState(
         {},
         '',
         './minhas-f4.html'
       );
 
-
-      selectStat('Todos');
+      if (isManager) {
+        selectManagerStat('all');
+      } else {
+        selectSupplierStat('Todos');
+      }
     }
   );
 
 
 /* =========================================================
-   NOVA F4
+   EXPORTAÇÃO / NOVA F4
    ========================================================= */
 
-document
-  .querySelector('#newF4Button')
-  ?.addEventListener(
-    'click',
-    () => {
+const exportButton =
+  document.querySelector('#exportButton');
 
-      window.location.href =
-        './nova-f4.html';
+exportButton?.addEventListener(
+  'click',
+  () => {
+    window.alert(
+      'A exportação será disponibilizada em uma próxima etapa.'
+    );
+  }
+);
 
-    }
-  );
+const newF4Button =
+  document.querySelector('#newF4Button');
 
-
-/* =========================================================
-   EXPORTAR CSV
-   ========================================================= */
-
-document
-  .querySelector('#exportButton')
-  .addEventListener(
-    'click',
-    () => {
-
-      const rows =
-        filteredData();
-
-
-      const header = [
-        'Código F4',
-        'F4',
-        'Fornecedor',
-        'Status',
-        'Última atualização',
-        'Proprietário',
-        'Responsável atual',
-        'Setor atual'
-      ];
-
-
-      const csvRows =
-        rows.map(item => [
-          getF4Code(item),
-          item.title,
-          item.supplier,
-          item.status,
-          formatDate(
-            item.updatedAt
-          ),
-          item.owner,
-          item.responsible,
-          item.sector
-        ]);
-
-
-      const csv =
-        [
-          header,
-          ...csvRows
-        ]
-          .map(row =>
-            row
-              .map(value =>
-                `"${String(value)
-                  .replaceAll(
-                    '"',
-                    '""'
-                  )}"`
-              )
-              .join(';')
-          )
-          .join('\n');
-
-
-      const blob =
-        new Blob(
-          [
-            `\uFEFF${csv}`
-          ],
-          {
-            type:
-              'text/csv;charset=utf-8'
-          }
-        );
-
-
-      const url =
-        URL.createObjectURL(
-          blob
-        );
-
-
-      const anchor =
-        document.createElement(
-          'a'
-        );
-
-
-      anchor.href = url;
-
-      anchor.download =
-        'minhas-f4.csv';
-
-
-      anchor.click();
-
-
-      URL.revokeObjectURL(
-        url
-      );
-    }
-  );
-
-
-/* =========================================================
-   FILTROS RECEBIDOS PELA URL
-   ========================================================= */
-
-const params =
-  new URLSearchParams(
-    location.search
-  );
-
-
-const initialStatus =
-  params.get('status');
-
-
-if (
-  initialStatus &&
-  [
-    ...statusFilter.options
-  ].some(
-    option =>
-      option.value ===
-      initialStatus
-  )
-) {
-  statusFilter.value =
-    initialStatus;
-}
-
-
-if (
-  params.get('attention') === '1'
-) {
-  statusFilter.value =
-    'Devolvida';
-}
+newF4Button?.addEventListener(
+  'click',
+  () => {
+    window.location.href =
+      './nova-f4.html';
+  }
+);
 
 
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
 
+configureManagerView();
 syncStats();
+bindStatEvents();
 
-selectStat(
-  statusFilter.value
-);
+const initialParams =
+  new URLSearchParams(location.search);
+
+if (
+  isManager &&
+  initialParams.get('approval') === 'me'
+) {
+  selectManagerStat('approval');
+} else {
+  render();
+}
