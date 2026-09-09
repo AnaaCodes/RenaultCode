@@ -529,7 +529,7 @@ document
 
 document
   .querySelector('#newF4Button')
-  .addEventListener(
+  ?.addEventListener(
     'click',
     () => {
 

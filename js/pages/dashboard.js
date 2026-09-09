@@ -11,6 +11,10 @@ import {
 } from '../data/f4-data.js';
 
 import {
+  getActiveProfile
+} from '../core/user-session.js';
+
+import {
   getAttentionCounts,
   getWorkQueue,
   getF4Code,
@@ -26,6 +30,12 @@ mountAppShell({
   activePage: 'dashboard',
   title: 'VISÃO GERAL'
 });
+
+const activeProfile = getActiveProfile();
+const welcomeTitle = document.querySelector('#welcomeTitle');
+if (welcomeTitle) {
+  welcomeTitle.textContent = `Olá, ${activeProfile.name.split(' ')[0]}!`;
+}
 
 
 /* =========================================================
