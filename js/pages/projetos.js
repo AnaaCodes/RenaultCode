@@ -1,0 +1,83 @@
+import { mountAppShell } from '../core/app-shell.js';
+import { showToast } from '../core/toast.js';
+import { PROJECTS, PRIORITY_F4, MOVEMENTS, RISKS } from '../data/project-data.js';
+
+if (mountAppShell({ activePage: 'projetos', title: 'Projetos' })) {
+  const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+
+  const summary = {
+    active: PROJECTS.length,
+    f4: PROJECTS.reduce((sum, project) => sum + project.totals.f4, 0),
+    analysis: 19,
+    approval: PROJECTS.reduce((sum, project) => sum + project.totals.approval, 0),
+    returned: PROJECTS.reduce((sum, project) => sum + project.totals.returned, 0),
+    impact: PROJECTS.reduce((sum, project) => sum + project.totals.impact, 0)
+  };
+
+  document.querySelector('[data-summary="active"]').textContent = summary.active;
+  document.querySelector('[data-summary="f4"]').textContent = summary.f4;
+  document.querySelector('[data-summary="analysis"]').textContent = summary.analysis;
+  document.querySelector('[data-summary="approval"]').textContent = summary.approval;
+  document.querySelector('[data-summary="returned"]').textContent = summary.returned;
+  document.querySelector('[data-summary="impact"]').textContent = money(summary.impact);
+
+  const projectsGrid = document.querySelector('#projectsGrid');
+  projectsGrid.innerHTML = PROJECTS.map(project => `
+    <article class="project-card" data-project-id="${project.id}">
+      <div class="project-card-top">
+        <div class="project-heading">
+          <div class="project-title-row">
+            <h3>${project.id} — ${project.name}</h3>
+            <span class="project-health ${project.statusTone}"><i></i>${project.status}</span>
+          </div>
+          <div class="project-tags">${project.tags.map(tag => `<span>${tag}</span>`).join('')}</div>
+        </div>
+        <dl class="project-meta">
+          <div><dt>Fase atual</dt><dd>${project.phase}</dd></div>
+          <div><dt>SOP previsto</dt><dd><span aria-hidden="true">▣</span> ${project.sop}</dd></div>
+        </dl>
+      </div>
+
+      <div class="project-metrics">
+        <div><span>F4 totais</span><strong>${project.totals.f4}</strong></div>
+        <div><span>Aguardando aprovação</span><strong>${project.totals.approval}</strong></div>
+        <div><span>Devolvidas</span><strong>${project.totals.returned}</strong></div>
+        <div><span>Fornecedores</span><strong>${project.totals.suppliers}</strong></div>
+        <div><span>Impacto econômico</span><strong>${money(project.totals.impact)}</strong></div>
+      </div>
+
+      <div class="project-progress-row">
+        <div class="project-timeline" style="--project-progress:${project.progress}%">
+          <div class="timeline-line"><span></span></div>
+          <div class="timeline-steps">
+            ${project.milestones.map((milestone, index) => `<div class="timeline-step ${index <= Math.floor((project.progress / 100) * 4) ? 'done' : ''}"><i></i><span>${milestone[0]}</span><small>${milestone[1]}</small></div>`).join('')}
+          </div>
+        </div>
+        <button class="project-open-button" type="button" data-open-project="${project.id}">Ver projeto <span>→</span></button>
+      </div>
+    </article>`).join('');
+
+  const priorityBody = document.querySelector('#priorityBody');
+  priorityBody.innerHTML = PRIORITY_F4.map(row => `
+    <tr>
+      <td><strong>${row[0]}</strong></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td>
+      <td class="${row[5] === 'Hoje' ? 'deadline-today' : ''}">${row[5]}</td>
+      <td><span class="priority-status ${row[6].toLowerCase().replaceAll(' ', '-')}">${row[6]}</span></td><td>${row[7]}</td>
+    </tr>`).join('');
+
+  document.querySelector('#movementsList').innerHTML = MOVEMENTS.map(item => `
+    <li><span class="movement-dot ${item[0]}"></span><time>${item[1]}</time><div><strong>${item[2]}</strong><small>${item[3]}</small></div><span class="movement-arrow">›</span></li>`).join('');
+
+  document.querySelector('#risksList').innerHTML = RISKS.map(item => `
+    <li><span class="risk-icon ${item[0]}">${item[0] === 'critical' ? '!' : '▲'}</span><strong>${item[1]}</strong><span>${item[2]}</span><span class="movement-arrow">›</span></li>`).join('');
+
+  document.querySelectorAll('[data-open-project]').forEach(button => {
+    button.addEventListener('click', () => {
+      const project = PROJECTS.find(item => item.id === button.dataset.openProject);
+      showToast(`${project.id} — ${project.name}: este projeto será aberto.`);
+    });
+  });
+
+  document.querySelector('#newProjectButton')?.addEventListener('click', () => showToast('Novo projeto: fluxo de criação ainda não implementado nesta demonstração.'));
+  document.querySelectorAll('[data-placeholder-project]').forEach(button => button.addEventListener('click', () => showToast(`${button.dataset.placeholderProject}: visualização completa ainda não implementada.`)));
+}

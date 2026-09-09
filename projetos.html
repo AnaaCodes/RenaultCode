@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portfólio de projetos veiculares do sistema F4 Renault Geely do Brasil">
+  <title>Projetos | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/projetos.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content projects-page">
+        <div class="page-container projects-container">
+          <section class="projects-intro" aria-labelledby="projectsTitle">
+            <p class="eyebrow">Portfólio</p>
+            <h2 id="projectsTitle">Acompanhe seus projetos veiculares</h2>
+            <p>Monitore o andamento dos projetos, o status das F4, prazos, fornecedores e o impacto econômico.</p>
+          </section>
+
+          <section class="project-summary-grid" aria-label="Resumo dos projetos">
+            <article class="project-summary-card"><span class="summary-icon purple">▣</span><div><small>Projetos ativos</small><strong data-summary="active">0</strong><p>Em desenvolvimento</p></div></article>
+            <article class="project-summary-card"><span class="summary-icon purple">▤</span><div><small>F4 totais</small><strong data-summary="f4">0</strong><p>Em todos os projetos</p></div></article>
+            <article class="project-summary-card"><span class="summary-icon blue">●</span><div><small>Em análise</small><strong data-summary="analysis">0</strong><p>Em fluxo de análise</p></div></article>
+            <article class="project-summary-card"><span class="summary-icon orange">◷</span><div><small>Aguardando aprovação</small><strong data-summary="approval">0</strong><p>Aguardando decisão</p></div></article>
+            <article class="project-summary-card"><span class="summary-icon red">!</span><div><small>Devolvidas</small><strong data-summary="returned">0</strong><p>Precisam de ajuste</p></div></article>
+            <article class="project-summary-card impact"><span class="summary-icon green">▥</span><div><small>Impacto econômico</small><strong data-summary="impact">€ 0</strong><p>Estimativa total</p></div></article>
+          </section>
+
+          <section class="projects-section" aria-labelledby="myProjectsTitle">
+            <div class="projects-section-heading">
+              <h2 id="myProjectsTitle">Meus projetos</h2>
+              <button class="primary-button compact-project-action" id="newProjectButton" type="button"><span>＋</span> Novo projeto</button>
+            </div>
+            <div class="projects-grid" id="projectsGrid"></div>
+          </section>
+
+          <section class="projects-bottom-grid">
+            <article class="project-panel priority-panel" aria-labelledby="priorityTitle">
+              <div class="panel-heading">
+                <div><h2 id="priorityTitle">F4 prioritárias</h2><p>F4 que precisam da sua atenção nos projetos.</p></div>
+                <button class="panel-link" type="button" data-placeholder-project="F4 prioritárias">Ver todas ›</button>
+              </div>
+              <div class="priority-filters" aria-label="Filtros demonstrativos">
+                <label class="priority-search"><span>⌕</span><input type="search" placeholder="Buscar por código, título, fornecedor..."></label>
+                <label><span>Projeto</span><select><option>Todos</option></select></label>
+                <label><span>Status</span><select><option>Todos</option></select></label>
+                <label><span>Período</span><select><option>Qualquer data</option></select></label>
+              </div>
+              <div class="priority-table-wrap">
+                <table class="priority-table">
+                  <thead><tr><th>Código F4</th><th>Projeto</th><th>Solicitação</th><th>Fornecedor</th><th>Etapa atual</th><th>Prazo</th><th>Status</th><th>Responsável atual</th></tr></thead>
+                  <tbody id="priorityBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <div class="side-panels">
+              <article class="project-panel movements-panel">
+                <div class="panel-heading"><h2>Últimas movimentações</h2><button class="panel-link" type="button" data-placeholder-project="Movimentações">Ver todas ›</button></div>
+                <ul class="movements-list" id="movementsList"></ul>
+              </article>
+              <article class="project-panel risks-panel">
+                <div class="panel-heading"><h2>Riscos e pontos de atenção</h2><button class="panel-link" type="button" data-placeholder-project="Riscos">Ver todas ›</button></div>
+                <ul class="risks-list" id="risksList"></ul>
+              </article>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/projetos.js"></script>
+</body>
+</html>
