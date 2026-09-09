@@ -1,5 +1,18 @@
+import { getActiveProfile, getAlternateProfile } from '../core/user-session.js';
+
+function avatarMarkup(profile, className = 'profile-avatar') {
+  if (profile.avatar) {
+    return `<img class="${className}" src="${profile.avatar}" alt="Foto de perfil de ${profile.name}">`;
+  }
+
+  return `<span class="${className} profile-avatar-initials" aria-hidden="true">${profile.initials}</span>`;
+}
+
 export function renderHeader(title) {
   const mount = document.querySelector('#headerMount');
+  const current = getActiveProfile();
+  const alternate = getAlternateProfile();
+
   mount.innerHTML = `
     <header class="topbar">
       <div class="topbar-left">
@@ -11,13 +24,28 @@ export function renderHeader(title) {
           <h1>${title}</h1>
         </div>
       </div>
-      <button class="profile" type="button" data-placeholder="Perfil" aria-label="Abrir menu do perfil">
-        <div class="profile-text">
-          <span class="profile-name">Analice Mendes</span>
-          <span class="profile-role">Fornecedor</span>
+
+      <div class="profile-switcher" id="profileSwitcher">
+        <button class="profile" id="profileButton" type="button" aria-label="Trocar perfil" aria-haspopup="menu" aria-expanded="false" aria-controls="profileMenu">
+          <div class="profile-text">
+            <span class="profile-name">${current.name}</span>
+            <span class="profile-role">${current.role}</span>
+          </div>
+          ${avatarMarkup(current)}
+          <svg class="profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z"/></svg>
+        </button>
+
+        <div class="profile-menu" id="profileMenu" role="menu" aria-label="Trocar perfil" hidden>
+          <p class="profile-menu-label">Trocar perfil</p>
+          <button class="profile-menu-option" type="button" role="menuitem" data-profile-id="${alternate.id}">
+            <span class="profile-menu-avatar">${avatarMarkup(alternate, 'profile-avatar')}</span>
+            <span class="profile-menu-copy">
+              <strong>${alternate.name}</strong>
+              <small>${alternate.role}</small>
+            </span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.3 10.7 4l8 8-8 8-1.4-1.3 6.7-6.7-6.7-6.7Z"/></svg>
+          </button>
         </div>
-        <img src="./assets/images/profile.jpg" alt="Foto de perfil de Analice Mendes">
-        <svg class="profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z"/></svg>
-      </button>
+      </div>
     </header>`;
 }

@@ -1,19 +1,10 @@
-const navItems = [
-  {
-    id: 'dashboard',
-    label: 'Visão geral',
-    href: './index.html',
-    icon: './assets/icons/visao-geral.png'
-  },
+import { hasPermission } from '../core/user-session.js';
 
-  {
-    id: 'nova-f4',
-    label: 'Nova F4',
-    href: './nova-f4.html',
-    icon: './assets/icons/nova-f4.png'
-  },
-  
+const navItems = [
+  { id: 'dashboard', label: 'Visão geral', href: './index.html', icon: './assets/icons/visao-geral.png' },
+  { id: 'nova-f4', label: 'Nova F4', href: './nova-f4.html', icon: './assets/icons/nova-f4.png', permission: 'createF4' },
   { id: 'minhas-f4', label: 'Minhas F4', href: './minhas-f4.html', icon: './assets/icons/minhas-f4.png' },
+  { id: 'projetos', label: 'Projetos', href: './projetos.html', icon: './assets/icons/projetos.svg', permission: 'viewProjects' },
   { id: 'pendencias', label: 'Pendências', href: './minhas-f4.html?attention=1', icon: './assets/icons/pendencias.png' },
   { id: 'historico', label: 'Histórico', href: '#', icon: './assets/icons/historico.png', placeholder: true },
   { id: 'notificacoes', label: 'Notificações', href: '#', icon: './assets/icons/notificacoes.png', placeholder: true }
@@ -21,13 +12,15 @@ const navItems = [
 
 export function renderSidebar(activePage) {
   const mount = document.querySelector('#sidebarMount');
+  const visibleItems = navItems.filter(item => !item.permission || hasPermission(item.permission));
+
   mount.innerHTML = `
     <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
       <button class="brand-toggle" id="brandToggle" type="button" aria-label="Recolher barra lateral" aria-controls="sidebar" aria-expanded="true" title="Recolher menu">
         <img class="brand-logo" src="./assets/images/logo-renault.png" alt="Renault Geely do Brasil">
       </button>
       <nav class="sidebar-nav" aria-label="Menu F4">
-        ${navItems.map(item => `
+        ${visibleItems.map(item => `
           <a class="nav-item ${activePage === item.id ? 'active' : ''}" href="${item.href}" ${activePage === item.id ? 'aria-current="page"' : ''} ${item.placeholder ? `data-placeholder="${item.label}"` : ''} title="${item.label}">
             <span class="nav-icon"><img src="${item.icon}" alt=""></span>
             <span class="nav-label">${item.label}</span>

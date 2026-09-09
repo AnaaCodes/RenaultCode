@@ -757,11 +757,8 @@
       var(--topbar-height)
     );
 
-  /* O header é fixed e não ocupa espaço no fluxo.
-     Somamos sua altura ao espaçamento superior para que
-     o primeiro conteúdo apareça totalmente abaixo dele. */
   padding:
-    calc(var(--topbar-height) + 32px)
+    32px
     clamp(
       24px,
       4vw,
@@ -1123,7 +1120,7 @@
 
   .main-content {
     padding:
-      calc(var(--topbar-height) + 24px)
+      24px
       16px
       42px;
   }
@@ -1183,4 +1180,170 @@
       22px;
   }
 
+}
+/* =========================================================
+   SELETOR DE PERFIL FLUTUANTE
+   ========================================================= */
+.profile-switcher {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.profile-switcher.is-open .profile {
+  background: rgba(255, 255, 255, .52);
+}
+
+.profile-switcher.is-open .profile-chevron {
+  transform: rotate(180deg);
+}
+
+.profile-chevron {
+  transition: transform .18s ease;
+}
+
+.profile-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-avatar-initials {
+  display: grid;
+  place-items: center;
+  background: #242424;
+  color: #fff;
+  font-family: "Sora", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1100;
+  width: 258px;
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, .62);
+  border-radius: 12px;
+  background: rgba(248, 248, 248, .88);
+  box-shadow: 0 16px 44px rgba(22, 20, 28, .16);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  opacity: 0;
+  transform: translateY(-5px) scale(.985);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.profile-menu[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
+.profile-switcher.is-open .profile-menu {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.profile-menu-label {
+  margin: 2px 8px 6px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.profile-menu-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background .16s ease, transform .16s ease;
+}
+
+.profile-menu-option:hover,
+.profile-menu-option:focus-visible {
+  background: rgba(79, 22, 184, .08);
+}
+
+.profile-menu-option:active {
+  transform: scale(.99);
+}
+
+.profile-menu-avatar {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.profile-menu-avatar .profile-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.profile-menu-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.profile-menu-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu-copy small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu-option > svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--purple);
+}
+
+/* Compensa o header fixo sem alterar sua altura ou o comportamento de sobreposição. */
+.main-content {
+  padding-top: calc(var(--topbar-height) + 32px);
+}
+
+@media (max-width: 620px) {
+  .profile-switcher .profile-avatar {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .profile-menu {
+    right: -4px;
+    width: min(258px, calc(100vw - 28px));
+  }
+
+  .main-content {
+    padding-top: calc(var(--topbar-height) + 24px);
+  }
 }
