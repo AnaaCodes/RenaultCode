@@ -27,7 +27,7 @@ export const USER_PROFILES = {
     team: 'Gerência de Projeto',
     avatar: null,
     initials: 'MO',
-    homePage: './projetos.html',
+    homePage: './index.html',
     permissions: {
       createF4: false,
       viewProjects: true,
@@ -84,7 +84,7 @@ export const USER_PROFILES = {
     team: 'CVE',
     avatar: './assets/images/profile.jpg',
     initials: 'AM',
-    homePage: './projetos.html',
+    homePage: './index.html',
     permissions: {
       createF4: false,
       viewProjects: true,
