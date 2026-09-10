@@ -1235,3 +1235,4 @@ select:focus {
   }
 
 }
+.assignee-name{display:block;color:var(--text);font-weight:600}.assignee-role{display:block;margin-top:3px;color:var(--text-muted);font-size:11px;white-space:normal}.manager-stats-grid{grid-template-columns:repeat(7,minmax(132px,1fr))}.manager-stats-grid .stat-card{min-height:118px;padding:15px}.manager-stats-grid .stat-label{font-size:12px}.manager-stats-grid .stat-value{font-size:27px}@media(max-width:1280px){.manager-stats-grid{grid-template-columns:repeat(4,minmax(150px,1fr))}}@media(max-width:760px){.manager-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
