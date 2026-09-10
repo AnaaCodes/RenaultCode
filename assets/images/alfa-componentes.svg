@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">Alfa Componentes</title>
+  <desc id="desc">Avatar corporativo da Alfa Componentes</desc>
+  <rect width="96" height="96" rx="48" fill="#202020"/>
+  <path d="M23 67 43 25h10l20 42H61l-4-9H39l-4 9H23Zm20-19h10l-5-12-5 12Z" fill="#fff"/>
+  <rect x="39" y="72" width="18" height="3" rx="1.5" fill="#7a22e6"/>
+</svg>
