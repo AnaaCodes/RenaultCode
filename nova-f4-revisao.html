@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validação Renault | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css"><link rel="stylesheet" href="./css/base.css"><link rel="stylesheet" href="./css/layout.css"><link rel="stylesheet" href="./css/components.css"><link rel="stylesheet" href="./css/nova-f4.css"><link rel="stylesheet" href="./css/nova-f4-flow.css">
+  <script>
+    // Impede que o conteúdo de decisão Renault seja renderizado ao fornecedor.
+    if (localStorage.getItem('f4-active-profile') !== 'manager') {
+      location.replace('./minhas-f4.html');
+    }
+  </script>
+</head>
+<body>
+<div class="app-shell" id="appShell"><div id="sidebarMount"></div><div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+<div class="workspace"><div id="headerMount"></div><main class="main-content"><div class="page-container new-f4-page flow-page">
+  <section class="form-progress" aria-label="Progresso da criação da F4">
+    <div class="form-progress-heading"><p class="eyebrow">Validação Renault</p><span class="request-number">Pedido nº <strong>PWD0245</strong></span></div>
+    <div class="validation-context">A etapa de criação foi concluída. Esta área é exclusiva da validação Renault.</div>
+  </section>
+
+  <form class="new-f4-form" id="reviewForm" novalidate>
+    <section class="form-card">
+      <div class="form-card-header"><div><p class="section-kicker">Decisão gerencial</p><h3>Validação final da F4</h3><p>Registre a decisão econômica, eventuais solicitações adicionais e as validações responsáveis.</p></div><span class="required-note"><span aria-hidden="true">*</span> Campos obrigatórios</span></div>
+      <div class="flow-card-content">
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Decisão da Renault</h4><p>Selecione uma única decisão para o impacto econômico da modificação.</p></div></div>
+          <div class="decision-options">
+            <label class="decision-card"><input type="radio" name="renaultDecision" value="Aceita"><strong>Aceita</strong><small>O impacto econômico é aceito.</small></label>
+            <label class="decision-card"><input type="radio" name="renaultDecision" value="Documentação adicional solicitada"><strong>Documentação adicional solicitada</strong><small>São necessários documentos ou renegociações antes da decisão.</small></label>
+            <label class="decision-card"><input type="radio" name="renaultDecision" value="Recusada"><strong>Recusada</strong><small>A proposta não foi aceita.</small></label>
+          </div>
+        </section>
+
+        <section class="flow-section" id="additionalRequestSection" hidden>
+          <div class="flow-section-heading"><div><h4>Documentação ou renegociação necessária</h4><p>Marque os pontos que precisam ser tratados antes do próximo marco.</p></div></div>
+          <div class="flow-grid-2">
+            <label class="inline-choice-card"><input type="checkbox" name="additionalPrf"><span><strong>PRF / Preço da peça</strong><small>Revisão relacionada ao preço da peça.</small></span></label>
+            <label class="inline-choice-card"><input type="checkbox" name="additionalSet"><span><strong>SET / TEF</strong><small>Revisão relacionada ao SET.</small></span></label>
+            <label class="inline-choice-card"><input type="checkbox" name="additionalTooling"><span><strong>VT / Ferramental</strong><small>Revisão relacionada ao ferramental.</small></span></label>
+            <label class="inline-choice-card"><input type="checkbox" name="additionalPackaging"><span><strong>Embalagem específica</strong><small>Revisão relacionada à embalagem específica.</small></span></label>
+          </div>
+          <label class="form-field"><span class="field-label">Comentário da solicitação</span><textarea name="additionalComment" maxlength="1000" placeholder="Descreva o que deve ser complementado ou renegociado."></textarea></label>
+        </section>
+
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Registro de validações e decisão</h4><p>Preencha os responsáveis, o registro eletrônico de assinatura e a data de cada validação aplicável.</p></div></div>
+          <div class="flow-table-wrap">
+            <table class="flow-table approval-table" aria-label="Registro de aprovações">
+              <thead><tr><th>Responsabilidade</th><th>Função</th><th>Nome</th><th>Assinatura / registro eletrônico</th><th>Data</th></tr></thead>
+              <tbody>
+                <tr><td class="fixed-text">Fornecedor</td><td>Gerente de Conta</td><td><input name="supplierName" placeholder="Nome"></td><td><input name="supplierSignature" placeholder="Registro"></td><td><input type="date" name="supplierDate"></td></tr>
+                <tr><td class="fixed-text">Proposta GFE</td><td><input name="gfePosition" placeholder="Função"></td><td><input name="gfeName" placeholder="Nome"></td><td><input name="gfeSignature" placeholder="Registro"></td><td><input type="date" name="gfeDate"></td></tr>
+                <tr><td class="fixed-text">Validação técnica</td><td>TSE (IST)</td><td><input name="technicalName" placeholder="Nome"></td><td><input name="technicalSignature" placeholder="Registro"></td><td><input type="date" name="technicalDate"></td></tr>
+                <tr><td class="fixed-text">Validação econômica</td><td>Comprador</td><td><input name="economicName" placeholder="Nome"></td><td><input name="economicSignature" placeholder="Registro"></td><td><input type="date" name="economicDate"></td></tr>
+                <tr><td class="fixed-text">Decisão</td><td>Projeto / Plataforma / Órgão / CVE</td><td><input name="decisionName" placeholder="Nome"></td><td><input name="decisionSignature" placeholder="Registro"></td><td><input type="date" name="decisionDate"></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="notice">A autorização definitiva da modificação pode ser confirmada em data posterior. Este registro representa a decisão e as validações desta F4.</p>
+        </section>
+
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Termos e observações</h4><p>Condições associadas à decisão da Renault.</p></div></div>
+          <div class="terms-box">
+            <p>A decisão considera que as informações fornecidas estão completas e corretas e não elimina as responsabilidades do fornecedor quanto ao fornecimento de peças conformes e adequadas ao uso final.</p>
+            <p>A aceitação de uma F4 não impede uma possível renegociação futura de preços quando aplicável às regras do processo.</p>
+            <p>Quando houver documentação adicional solicitada, os itens marcados acima devem ser tratados antes do próximo marco correspondente.</p>
+          </div>
+          <label class="inline-choice-card"><input type="checkbox" name="reviewConfirmed"><span><strong>Confirmo que revisei as informações desta F4</strong><small>Obrigatório para concluir o fluxo.</small></span></label>
+        </section>
+      </div>
+    </section>
+    <footer class="form-actions">
+      <div class="autosave-status" id="autosaveStatus" aria-live="polite">Nenhuma alteração salva nesta sessão.</div>
+      <div class="form-actions-buttons">
+        <a class="secondary-button back-button" href="./nova-f4-doa.html">Voltar ao DOA</a>
+        <button class="secondary-button" type="button" id="saveDraftButton">Salvar rascunho</button>
+        <button class="primary-button" type="submit">Concluir F4</button>
+      </div>
+    </footer>
+  </form>
+</div></main></div></div>
+<script type="module" src="./js/pages/nova-f4-revisao.js"></script>
+</body></html>

@@ -83,6 +83,9 @@ function setupStepperNavigation() {
   let dragStartScroll = 0;
 
   stepper.addEventListener('pointerdown', event => {
+    // Links das etapas precisam receber o clique normalmente.
+    if (event.target.closest('.step-link')) return;
+
     // No touch, mantemos o scroll nativo do navegador, que já é mais fluido.
     if (event.pointerType === 'touch') return;
 
@@ -305,7 +308,10 @@ form.addEventListener('submit', event => {
   if (!validateRequiredFields()) return;
 
   saveDraft({ notify: false });
-  showToast('Dados gerais validados. A etapa Fornecedor será conectada na próxima implementação.');
+  showToast('Dados gerais validados. Abrindo a etapa de impactos.');
+  window.setTimeout(() => {
+    window.location.href = './nova-f4-impactos.html';
+  }, 250);
 });
 
 setupStepperNavigation();

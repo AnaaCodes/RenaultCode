@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOA | Nova F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css"><link rel="stylesheet" href="./css/base.css"><link rel="stylesheet" href="./css/layout.css"><link rel="stylesheet" href="./css/components.css"><link rel="stylesheet" href="./css/nova-f4.css"><link rel="stylesheet" href="./css/nova-f4-flow.css">
+</head>
+<body>
+<div class="app-shell" id="appShell"><div id="sidebarMount"></div><div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+<div class="workspace"><div id="headerMount"></div><main class="main-content"><div class="page-container new-f4-page flow-page">
+  <section class="form-progress" aria-label="Progresso da criação da F4">
+    <div class="form-progress-heading"><p class="eyebrow">Nova F4</p><span class="request-number">Pedido nº <strong>PWD0245</strong></span></div>
+    <div class="stepper-shell"><ol class="stepper" aria-label="Etapas para criação da F4">
+      <li class="step"><a class="step-link" href="./nova-f4.html"><span class="step-number">1</span><span class="step-content"><strong>Dados gerais</strong></span></a></li>
+      <li class="step"><a class="step-link" href="./nova-f4-impactos.html"><span class="step-number">2</span><span class="step-content"><strong>Impactos</strong></span></a></li>
+      <li class="step is-active" aria-current="step"><a class="step-link" href="./nova-f4-doa.html"><span class="step-number">3</span><span class="step-content"><strong>DOA</strong></span></a></li>
+    </ol></div>
+  </section>
+
+  <form class="new-f4-form" id="doaForm" novalidate>
+    <section class="form-card">
+      <div class="form-card-header"><div><p class="section-kicker">Etapa 3 de 3</p><h3>Validação DOA</h3><p>Defina o escopo da modificação e visualize o nível de aprovação econômica estimado.</p></div><span class="required-note"><span aria-hidden="true">*</span> Campos obrigatórios</span></div>
+      <div class="flow-card-content">
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Uso da peça</h4><p>Selecione o contexto em que a peça será utilizada.</p></div></div>
+          <div class="inline-choice-cards">
+            <label class="inline-choice-card"><input type="radio" name="partUsage" value="dedicated"><span><strong>Peça dedicada</strong><small>Um projeto, uma plataforma ou um órgão.</small></span></label>
+            <label class="inline-choice-card"><input type="radio" name="partUsage" value="transversal"><span><strong>Peça transversal</strong><small>Utilizada de forma transversal entre projetos ou plataformas.</small></span></label>
+          </div>
+        </section>
+
+        <section class="flow-section" id="scopeSection">
+          <div class="flow-section-heading"><div><h4>Escopo da modificação</h4><p>Marque pelo menos uma condição aplicável ao uso selecionado.</p></div></div>
+          <div class="section-disabled" id="scopePrompt">Selecione primeiro o uso da peça.</div>
+          <div id="dedicatedScope" hidden>
+            <div class="inline-choice-cards">
+              <label class="inline-choice-card"><input type="checkbox" name="dedicatedUnique"><span><strong>Modificação em projeto/plataforma/órgão único</strong><small>Alteração dedicada a um único escopo.</small></span></label>
+              <label class="inline-choice-card"><input type="checkbox" name="dedicatedLoe"><span><strong>F4 vinculada a LOE modificada ou Green COCA</strong><small>Vínculo com LOE modificada ou Green COCA.</small></span></label>
+            </div>
+          </div>
+          <div id="transversalScope" hidden>
+            <div class="flow-grid-3">
+              <label class="inline-choice-card"><input type="checkbox" name="transversalUnique"><span><strong>Modificação em projeto/plataforma/órgão único</strong><small>Escopo único dentro de uma peça transversal.</small></span></label>
+              <label class="inline-choice-card"><input type="checkbox" name="transversalBeforeTga"><span><strong>Modificação transversal antes do TGA ou vinculada ao LOE</strong><small>Cenário anterior ao TGA ou relacionado ao LOE.</small></span></label>
+              <label class="inline-choice-card"><input type="checkbox" name="transversalAfterTga"><span><strong>Modificação transversal após TGA</strong><small>Cenário posterior ao marco TGA.</small></span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Resultado econômico para DOA</h4><p>Estimativa automática baseada nos impactos registrados. Valores em outra moeda dependem de conversão FOREX.</p></div></div>
+          <div class="doa-result">
+            <div class="doa-result-card"><span>Custos iniciais</span><strong id="initialCostValue">—</strong><small id="initialDoaLevel"></small></div>
+            <div class="doa-result-card"><span>Impacto médio anual</span><strong id="annualImpactValue">—</strong><small id="annualDoaLevel"></small></div>
+          </div>
+          <p class="notice" id="doaNote">O sistema usa os valores da etapa Impactos para sugerir o nível de aprovação.</p>
+        </section>
+
+        <section class="flow-section">
+          <div class="flow-section-heading"><div><h4>Observações para validação</h4><p>Inclua informações adicionais que ajudem na validação DOA.</p></div></div>
+          <label class="form-field"><span class="field-label">Observações</span><textarea name="doaNotes" maxlength="1200" placeholder="Registre exceções, vínculos ou justificativas relevantes."></textarea></label>
+        </section>
+      </div>
+    </section>
+    <footer class="form-actions">
+      <div class="autosave-status" id="autosaveStatus" aria-live="polite">Nenhuma alteração salva nesta sessão.</div>
+      <div class="form-actions-buttons">
+        <a class="secondary-button back-button" href="./nova-f4-impactos-detalhes.html">Voltar ao detalhamento</a>
+        <button class="secondary-button" type="button" id="saveDraftButton">Salvar rascunho</button>
+        <button class="primary-button" type="submit">Submeter para validação <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg></button>
+      </div>
+    </footer>
+  </form>
+</div></main></div></div>
+<script type="module" src="./js/pages/nova-f4-doa.js"></script>
+</body></html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Avaliação dos impactos econômicos da solicitação F4">
+  <title>Impactos | Nova F4</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/nova-f4.css">
+  <link rel="stylesheet" href="./css/nova-f4-impactos.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <div class="workspace">
+      <div id="headerMount"></div>
+
+      <main class="main-content">
+        <div class="page-container new-f4-page impact-page">
+          <section class="form-progress" aria-label="Progresso da criação da F4">
+            <div class="form-progress-heading">
+              <p class="eyebrow">Nova F4</p>
+              <span class="request-number">Pedido nº <strong>PWD0245</strong></span>
+            </div>
+
+            <div class="stepper-shell" id="stepperShell">
+              <ol class="stepper" id="formStepper" tabindex="0" aria-label="Etapas para criação da F4">
+                <li class="step"><a class="step-link" href="./nova-f4.html" aria-label="Ir para a etapa 1: Dados gerais"><span class="step-number">1</span><span class="step-content"><strong>Dados gerais</strong></span></a></li>
+                <li class="step is-active" aria-current="step"><a class="step-link" href="./nova-f4-impactos.html" aria-label="Ir para a etapa 2: Impactos"><span class="step-number">2</span><span class="step-content"><strong>Impactos</strong></span></a></li>
+                <li class="step"><a class="step-link" href="./nova-f4-doa.html" aria-label="Ir para a etapa 3: DOA"><span class="step-number">3</span><span class="step-content"><strong>DOA</strong></span></a></li>
+              </ol>
+            </div>
+          </section>
+
+          <form class="new-f4-form" id="impactForm" novalidate>
+            <section class="form-card">
+              <div class="form-card-header">
+                <div>
+                  <p class="section-kicker">Etapa 2 de 3</p>
+                  <h3>Síntese econômica e impactos</h3>
+                  <p>Informe os impactos da alteração. Valores derivados são calculados automaticamente pelo sistema.</p>
+                </div>
+                <span class="required-note"><span aria-hidden="true">*</span> Campos obrigatórios</span>
+              </div>
+
+              <div class="impact-content">
+                <section class="impact-section" aria-labelledby="economicConfigTitle">
+                  <div class="impact-section-heading">
+                    <div>
+                      <h4 id="economicConfigTitle">Configuração econômica</h4>
+                      <p>Defina a moeda e a unidade utilizadas na proposta.</p>
+                    </div>
+                  </div>
+
+                  <div class="economic-config-grid">
+                    <label class="form-field">
+                      <span class="field-label">Moeda da proposta <b aria-hidden="true">*</b></span>
+                      <select id="offerCurrency" name="offerCurrency" required>
+                        <option value="EUR" selected>EUR — Euro</option>
+                        <option value="BRL">BRL — Real brasileiro</option>
+                        <option value="USD">USD — Dólar americano</option>
+                      </select>
+                    </label>
+
+                    <label class="form-field">
+                      <span class="field-label">Unidade <b aria-hidden="true">*</b></span>
+                      <select id="units" name="units" required>
+                        <option value="">Selecione</option>
+                        <option value="Peça" selected>Peça</option>
+                        <option value="CEN">CEN</option>
+                        <option value="MIL">MIL</option>
+                        <option value="KG">KG</option>
+                        <option value="TON">TON</option>
+                        <option value="L">L</option>
+                      </select>
+                    </label>
+
+                    <fieldset class="choice-group compact-choice-group config-choice">
+                      <legend>Impacto em múltiplas moedas?</legend>
+                      <div class="binary-choice">
+                        <label class="binary-option"><input type="radio" name="multiCurrency" value="Sim"><span class="binary-option-ui"><span class="binary-option-indicator"></span>Sim</span></label>
+                        <label class="binary-option"><input type="radio" name="multiCurrency" value="Não" checked><span class="binary-option-ui"><span class="binary-option-indicator"></span>Não</span></label>
+                      </div>
+                    </fieldset>
+                  </div>
+                </section>
+
+                <section class="impact-section" aria-labelledby="economicImpactsTitle">
+                  <div class="impact-section-heading">
+                    <div>
+                      <h4 id="economicImpactsTitle">Impactos econômicos</h4>
+                      <p>Marque se existe impacto. Quando a resposta for “Sim”, o respectivo valor será obrigatório.</p>
+                    </div>
+                  </div>
+
+                  <div class="impact-grid">
+                    <article class="impact-item impact-item-wide" data-impact="technical">
+                      <div class="impact-item-head">
+                        <div><h5>Impacto no preço técnico</h5><p>Variação média do preço das referências afetadas.</p></div>
+                        <div class="inline-binary">
+                          <label><input type="radio" name="technicalImpact" value="Sim"><span>Sim</span></label>
+                          <label><input type="radio" name="technicalImpact" value="Não" checked><span>Não</span></label>
+                        </div>
+                      </div>
+
+                      <div class="technical-values is-disabled" id="technicalValues">
+                        <div class="currency-value-row">
+                          <label class="form-field currency-field"><span class="field-label">Moeda</span><select id="technicalCurrency1" name="technicalCurrency1" disabled><option value="EUR">EUR</option><option value="BRL">BRL</option><option value="USD">USD</option></select></label>
+                          <label class="form-field amount-field"><span class="field-label">Valor do impacto</span><input type="number" id="technicalAmount1" name="technicalAmount1" min="0" step="0.001" value="0" disabled></label>
+                        </div>
+                        <div class="currency-value-row additional-currency-row" id="additionalCurrency2" hidden>
+                          <label class="form-field currency-field"><span class="field-label">2ª moeda</span><select id="technicalCurrency2" name="technicalCurrency2"><option value="">Selecione</option><option value="EUR">EUR</option><option value="BRL">BRL</option><option value="USD">USD</option></select></label>
+                          <label class="form-field amount-field"><span class="field-label">Valor</span><input type="number" id="technicalAmount2" name="technicalAmount2" min="0" step="0.001" value="0"></label>
+                        </div>
+                        <div class="currency-value-row additional-currency-row" id="additionalCurrency3" hidden>
+                          <label class="form-field currency-field"><span class="field-label">3ª moeda <small>(opcional)</small></span><select id="technicalCurrency3" name="technicalCurrency3"><option value="">Selecione</option><option value="EUR">EUR</option><option value="BRL">BRL</option><option value="USD">USD</option></select></label>
+                          <label class="form-field amount-field"><span class="field-label">Valor</span><input type="number" id="technicalAmount3" name="technicalAmount3" min="0" step="0.001" value="0"></label>
+                        </div>
+                        <p class="calculation-note" id="forexNote" hidden>Valores em moedas diferentes não são somados sem a taxa FOREX. O cálculo automático considera apenas a moeda da proposta.</p>
+                      </div>
+                    </article>
+
+                    <article class="impact-item" data-impact="tooling">
+                      <div class="impact-item-head"><div><h5>Impacto de ferramental</h5><p>Valor de ferramental não amortizado.</p></div><div class="inline-binary"><label><input type="radio" name="toolingImpact" value="Sim"><span>Sim</span></label><label><input type="radio" name="toolingImpact" value="Não" checked><span>Não</span></label></div></div>
+                      <label class="form-field impact-value"><span class="field-label">Valor</span><div class="money-input"><span data-currency-label>EUR</span><input type="number" name="toolingAmount" min="0" step="0.01" value="0" disabled></div></label>
+                    </article>
+
+                    <article class="impact-item" data-impact="set">
+                      <div class="impact-item-head"><div><h5>Impacto de SET</h5><p>Supplier Entry Ticket. Detalhamento posterior.</p></div><div class="inline-binary"><label><input type="radio" name="setImpact" value="Sim"><span>Sim</span></label><label><input type="radio" name="setImpact" value="Não" checked><span>Não</span></label></div></div>
+                      <label class="form-field impact-value"><span class="field-label">Valor</span><div class="money-input"><span data-currency-label>EUR</span><input type="number" name="setAmount" min="0" step="0.01" value="0" disabled></div></label>
+                    </article>
+
+                    <article class="impact-item" data-impact="massProduction">
+                      <div class="impact-item-head"><div><h5>PDS — Produção em série</h5><p>Impacto adicional no preço PDS de produção.</p></div><div class="inline-binary"><label><input type="radio" name="massProductionImpact" value="Sim"><span>Sim</span></label><label><input type="radio" name="massProductionImpact" value="Não" checked><span>Não</span></label></div></div>
+                      <label class="form-field impact-value"><span class="field-label">Valor unitário</span><div class="money-input"><span data-currency-label>EUR</span><input type="number" name="massProductionAmount" min="0" step="0.001" value="0" disabled></div></label>
+                    </article>
+
+                    <article class="impact-item" data-impact="aftersales">
+                      <div class="impact-item-head"><div><h5>PDS — Pós-venda</h5><p>Impacto adicional no preço PDS de pós-venda.</p></div><div class="inline-binary"><label><input type="radio" name="aftersalesImpact" value="Sim"><span>Sim</span></label><label><input type="radio" name="aftersalesImpact" value="Não" checked><span>Não</span></label></div></div>
+                      <label class="form-field impact-value"><span class="field-label">Valor unitário</span><div class="money-input"><span data-currency-label>EUR</span><input type="number" name="aftersalesAmount" min="0" step="0.001" value="0" disabled></div></label>
+                    </article>
+
+                    <article class="impact-item" data-impact="packaging">
+                      <div class="impact-item-head"><div><h5>Embalagem específica</h5><p>Impacto total de custo da embalagem específica.</p></div><div class="inline-binary"><label><input type="radio" name="packagingImpact" value="Sim"><span>Sim</span></label><label><input type="radio" name="packagingImpact" value="Não" checked><span>Não</span></label></div></div>
+                      <label class="form-field impact-value"><span class="field-label">Custo total</span><div class="money-input"><span data-currency-label>EUR</span><input type="number" name="packagingAmount" min="0" step="0.01" value="0" disabled></div></label>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="impact-section" aria-labelledby="summaryTitle">
+                  <div class="impact-section-heading summary-heading"><div><h4 id="summaryTitle">Volume e resumo do impacto</h4><p>Os resultados abaixo são calculados automaticamente.</p></div></div>
+
+                  <div class="volume-row">
+                    <label class="form-field volume-field"><span class="field-label">Volume médio anual <b aria-hidden="true">*</b></span><div class="unit-input"><input type="number" id="annualVolume" name="annualVolume" min="1" step="1" placeholder="Ex.: 45000" required><span id="volumeUnit">Peça/ano</span></div><small class="field-help">Quantidade média de unidades considerando 12 meses.</small></label>
+                  </div>
+
+                  <div class="summary-cards">
+                    <article class="summary-card"><span>Impacto unitário</span><strong id="unitImpactResult">€ 0,000 / peça</strong><small>Sem SET, na moeda da proposta</small></article>
+                    <article class="summary-card"><span>Impacto médio anual</span><strong id="annualImpactResult">€ 0,00 / ano</strong><small id="annualImpactEur">EUR/ano: € 0,00</small></article>
+                    <article class="summary-card"><span>Custos iniciais totais</span><strong id="initialCostsResult">€ 0,00</strong><small id="initialCostsEur">EUR: € 0,00</small></article>
+                  </div>
+                </section>
+
+                <section class="impact-section capacity-section" aria-labelledby="capacityTitle">
+                  <div class="impact-section-heading"><div><h4 id="capacityTitle">Capacidade produtiva</h4><p>Informe se a modificação impacta o compromisso de capacidade de fabricação.</p></div></div>
+                  <fieldset class="choice-group compact-choice-group capacity-choice">
+                    <legend>Existe impacto na capacidade produtiva? <b aria-hidden="true">*</b></legend>
+                    <div class="binary-choice">
+                      <label class="binary-option"><input type="radio" name="capacityImpact" value="Sim" required><span class="binary-option-ui"><span class="binary-option-indicator"></span>Sim</span></label>
+                      <label class="binary-option"><input type="radio" name="capacityImpact" value="Não" required><span class="binary-option-ui"><span class="binary-option-indicator"></span>Não</span></label>
+                    </div>
+                    <p class="capacity-message" id="capacityMessage" hidden>Os detalhes da capacidade serão solicitados na etapa de detalhamento técnico.</p>
+                  </fieldset>
+                </section>
+              </div>
+            </section>
+
+            <footer class="form-actions">
+              <div class="autosave-status" id="autosaveStatus" aria-live="polite">Nenhuma alteração salva nesta sessão.</div>
+              <div class="form-actions-buttons">
+                <a class="secondary-button back-button" href="./nova-f4.html">Voltar</a>
+                <button class="secondary-button" type="button" id="saveDraftButton">Salvar rascunho</button>
+                <button class="primary-button" type="submit">Detalhar impactos <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg></button>
+              </div>
+            </footer>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pages/nova-f4-impactos.js"></script>
+</body>
+</html>

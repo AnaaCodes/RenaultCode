@@ -38,45 +38,24 @@
               </span>
             </div>
 
-            <ol class="stepper" aria-label="Etapas para criação da F4">
+            <ol class="stepper" id="formStepper" tabindex="0" aria-label="Etapas para criação da F4">
               <li class="step is-active" aria-current="step">
-                <span class="step-number">1</span>
-                <span class="step-content">
-                  <strong>Dados gerais</strong>
-                  <small>Informações iniciais</small>
-                </span>
+                <a class="step-link" href="./nova-f4.html" aria-label="Ir para a etapa 1: Dados gerais">
+                  <span class="step-number">1</span>
+                  <span class="step-content"><strong>Dados gerais</strong><small>Informações iniciais</small></span>
+                </a>
               </li>
-
               <li class="step">
-                <span class="step-number">2</span>
-                <span class="step-content">
-                  <strong>Fornecedor</strong>
-                  <small>Dados do fornecedor</small>
-                </span>
+                <a class="step-link" href="./nova-f4-impactos.html" aria-label="Ir para a etapa 2: Impactos">
+                  <span class="step-number">2</span>
+                  <span class="step-content"><strong>Impactos</strong><small>Avaliação de impactos</small></span>
+                </a>
               </li>
-
               <li class="step">
-                <span class="step-number">3</span>
-                <span class="step-content">
-                  <strong>Impactos</strong>
-                  <small>Avaliação de impactos</small>
-                </span>
-              </li>
-
-              <li class="step">
-                <span class="step-number">4</span>
-                <span class="step-content">
-                  <strong>DOA</strong>
-                  <small>Dados complementares</small>
-                </span>
-              </li>
-
-              <li class="step">
-                <span class="step-number">5</span>
-                <span class="step-content">
-                  <strong>Revisão final</strong>
-                  <small>Conferência e envio</small>
-                </span>
+                <a class="step-link" href="./nova-f4-doa.html" aria-label="Ir para a etapa 3: DOA">
+                  <span class="step-number">3</span>
+                  <span class="step-content"><strong>DOA</strong><small>Dados complementares</small></span>
+                </a>
               </li>
             </ol>
           </section>
@@ -85,7 +64,7 @@
             <section class="form-card" aria-labelledby="generalInfoTitle">
               <div class="form-card-header">
                 <div>
-                  <p class="section-kicker">Etapa 1 de 5</p>
+                  <p class="section-kicker">Etapa 1 de 3</p>
                   <h3 id="generalInfoTitle">Informações da solicitação</h3>
                   <p>Preencha os dados que identificam e contextualizam a alteração contratual.</p>
                 </div>
@@ -229,7 +208,7 @@
                 </button>
 
                 <button class="primary-button" type="submit">
-                  Continuar para fornecedor
+                  Continuar para impactos
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg>
                 </button>
               </div>
