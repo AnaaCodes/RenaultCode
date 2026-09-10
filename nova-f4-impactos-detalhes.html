@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Detalhamento dos impactos da solicitação F4">
+  <meta name="description" content="Detalhamento técnico e econômico dos impactos da solicitação F4">
   <title>Detalhamento dos impactos | Nova F4</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,159 +18,221 @@
 </head>
 <body>
 <div class="app-shell" id="appShell">
-  <div id="sidebarMount"></div><div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-  <div class="workspace"><div id="headerMount"></div>
-    <main class="main-content"><div class="page-container new-f4-page flow-page">
-      <section class="form-progress" aria-label="Progresso da criação da F4">
-        <div class="form-progress-heading"><p class="eyebrow">Nova F4</p><span class="request-number">Pedido nº <strong>PWD0245</strong></span></div>
-        <div class="stepper-shell"><ol class="stepper" aria-label="Etapas para criação da F4">
-          <li class="step"><a class="step-link" href="./nova-f4.html"><span class="step-number">1</span><span class="step-content"><strong>Dados gerais</strong></span></a></li>
-          <li class="step is-active" aria-current="step"><a class="step-link" href="./nova-f4-impactos.html"><span class="step-number">2</span><span class="step-content"><strong>Impactos</strong></span></a></li>
-          <li class="step"><a class="step-link" href="./nova-f4-doa.html"><span class="step-number">3</span><span class="step-content"><strong>DOA</strong></span></a></li>
-        </ol></div>
-      </section>
+  <div id="sidebarMount"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
-      <form class="new-f4-form" id="impactDetailsForm" novalidate>
-        <section class="form-card">
-          <div class="form-card-header">
-            <div><p class="section-kicker">Etapa 2 de 3 · Detalhamento</p><h3>Detalhamento dos impactos</h3><p>Detalhe a composição técnica e econômica dos impactos informados anteriormente.</p></div>
-            <span class="required-note"><span aria-hidden="true">*</span> Campos obrigatórios conforme o impacto</span>
+  <div class="workspace">
+    <div id="headerMount"></div>
+    <main class="main-content">
+      <div class="page-container new-f4-page flow-page impact-detail-page">
+        <section class="form-progress" aria-label="Progresso da criação da F4">
+          <div class="form-progress-heading">
+            <p class="eyebrow">Nova F4</p>
+            <span class="request-number">Pedido nº <strong>PWD0245</strong></span>
           </div>
-
-          <div class="flow-card-content">
-            <section class="flow-section">
-              <div class="flow-section-heading"><div><h4>Impactos técnicos</h4><p>Registre o impacto CSR e a variação de peso da modificação.</p></div></div>
-              <div class="flow-grid-2">
-                <fieldset class="choice-group compact-choice-group">
-                  <legend>Existe impacto CSR?</legend>
-                  <div class="binary-choice">
-                    <label class="binary-option"><input type="radio" name="csrImpact" value="Sim"><span class="binary-option-ui"><span class="binary-option-indicator"></span>Sim</span></label>
-                    <label class="binary-option"><input type="radio" name="csrImpact" value="Não" checked><span class="binary-option-ui"><span class="binary-option-indicator"></span>Não</span></label>
-                  </div>
-                </fieldset>
-                <label class="form-field"><span class="field-label">Impacto no peso</span><div class="unit-input"><input type="number" name="weightImpact" step="0.001" value="0"><span>g</span></div><small class="field-help">Pode ser positivo, negativo ou zero.</small></label>
-              </div>
-            </section>
-
-            <section class="flow-section" id="partPriceSection">
-              <div class="flow-section-heading"><div><h4>Composição do preço da peça</h4><p>Detalhe a formação do impacto no preço técnico.</p></div></div>
-              <div class="section-disabled" id="partPriceDisabled" hidden>O impacto no preço técnico foi marcado como “Não” na síntese econômica.</div>
-              <div id="partPriceContent">
-                <div class="cost-breakdown">
-                  <label class="form-field"><span class="field-label">Material</span><input type="number" name="materialCost" min="0" step="0.001" value="0"></label>
-                  <label class="form-field"><span class="field-label">Custo direto</span><input type="number" name="directCost" min="0" step="0.001" value="0"></label>
-                  <label class="form-field"><span class="field-label">Custo indireto</span><input type="number" name="indirectCost" min="0" step="0.001" value="0"></label>
-                  <label class="form-field"><span class="field-label">Custos gerais + margem</span><input type="number" name="generalMargin" min="0" step="0.001" value="0"></label>
-                  <label class="form-field"><span class="field-label">Embalagem</span><input type="number" name="partPackaging" min="0" step="0.001" value="0"></label>
-                </div>
-                <div class="calculated-strip" style="margin-top:14px">
-                  <div class="calculated-box"><span>Impacto calculado no preço da peça</span><strong id="partPriceTotal">€ 0,000</strong></div>
-                  <div class="calculated-box"><span>Valor informado na síntese</span><strong id="partPriceDeclared">€ 0,000</strong></div>
-                  <div class="calculated-box"><span>Diferença</span><strong id="partPriceDifference">€ 0,000</strong></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="flow-section" id="toolingSection">
-              <div class="flow-section-heading"><div><h4>Detalhamento de ferramental</h4><p>Associe o impacto de ferramental à referência IDO.</p></div></div>
-              <div class="section-disabled" id="toolingDisabled" hidden>O impacto de ferramental foi marcado como “Não”.</div>
-              <div class="flow-grid-2" id="toolingContent">
-                <label class="form-field"><span class="field-label">Referência IDO <b aria-hidden="true">*</b></span><input type="text" name="idoReference" placeholder="Ex.: IDO-000123"></label>
-                <label class="form-field"><span class="field-label">Valor de ferramental</span><input type="number" id="toolingDetailAmount" min="0" step="0.01" readonly></label>
-              </div>
-            </section>
-
-            <section class="flow-section" id="setSection">
-              <div class="flow-section-heading"><div><h4>Composição do SET</h4><p>Quantidade × custo unitário = total automático. Use linhas adicionais para validação e outros custos.</p></div></div>
-              <div class="section-disabled" id="setDisabled" hidden>O impacto de SET foi marcado como “Não”.</div>
-              <div id="setContent">
-                <div class="flow-table-wrap">
-                  <table class="flow-table" aria-label="Detalhamento SET">
-                    <thead><tr><th>Seção</th><th>Descrição</th><th>Quantidade</th><th>Custo unitário</th><th>Total</th><th></th></tr></thead>
-                    <tbody id="setRows"></tbody>
-                  </table>
-                </div>
-                <button class="add-row-button" type="button" id="addSetRow" style="margin-top:12px">+ Adicionar custo</button>
-                <div class="calculated-strip" style="margin-top:14px">
-                  <div class="calculated-box"><span>Total SET sem custos financeiros</span><strong id="setSubtotal">€ 0,00</strong></div>
-                  <div class="calculated-box"><span>SET informado na síntese</span><strong id="setDeclared">€ 0,00</strong></div>
-                  <div class="calculated-box"><span>Diferença</span><strong id="setDifference">€ 0,00</strong></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="flow-section" id="financialSection">
-              <div class="flow-section-heading"><div><h4>Condições financeiras e amortização</h4><p>Complete as condições aplicáveis ao SET e à embalagem específica.</p></div></div>
-              <div class="flow-grid-3">
-                <label class="form-field"><span class="field-label">Quantidade para amortização</span><input type="number" name="amortizationQuantity" min="0" step="1" placeholder="Nº de peças"></label>
-                <label class="form-field"><span class="field-label">Duração estimada</span><select name="estimatedDuration"><option value="">Selecione</option><option>6 meses</option><option>12 meses</option><option>18 meses</option><option>24 meses</option><option>36 meses</option><option>48 meses</option></select></label>
-                <label class="form-field"><span class="field-label">Taxa financeira</span><div class="unit-input"><input type="number" name="financialFeeRate" min="0" step="0.01" value="0"><span>%</span></div></label>
-                <label class="form-field"><span class="field-label">Valor dos custos financeiros</span><input type="number" name="financialFeeAmount" min="0" step="0.01" value="0"></label>
-                <label class="form-field"><span class="field-label">Token</span><input type="number" name="tokenAmount" min="0" step="0.01" value="0"></label>
-                <label class="form-field"><span class="field-label">Embalagem específica amortizada</span><input type="number" name="amortizedPackaging" min="0" step="0.01" value="0"></label>
-              </div>
-              <p class="notice">A taxa e o valor de custos financeiros permanecem separados porque a fórmula corporativa de cálculo não foi fornecida nesta etapa.</p>
-            </section>
-
-            <section class="flow-section">
-              <div class="flow-section-heading"><div><h4>Referências impactadas</h4><p>Cadastre as referências afetadas pela modificação. O impacto total é calculado automaticamente.</p></div></div>
-              <div class="flow-table-wrap">
-                <table class="flow-table" aria-label="Referências impactadas">
-                  <thead><tr><th>Referência atual</th><th>Último preço validado</th><th>Diversidade adicionada</th><th>Nova referência</th><th>Impacto peça s/ Token</th><th>Impacto Token SET</th><th>Impacto total</th><th>Outras informações</th><th></th></tr></thead>
-                  <tbody id="referenceRows"></tbody>
-                </table>
-              </div>
-              <button class="add-row-button" type="button" id="addReferenceRow">+ Adicionar referência</button>
-              <p class="notice">Quando “Diversidade adicionada” = Sim, a referência atual continua válida em conjunto com a nova referência.</p>
-            </section>
-
-            <section class="flow-section">
-              <div class="flow-section-heading"><div><h4>Detalhes antes e depois da modificação</h4><p>Registre observações e documentos que ajudem a comparar a condição atual com a proposta.</p></div></div>
-              <div class="documentation-grid">
-                <div class="document-box">
-                  <h5>Antes da modificação</h5>
-                  <label class="form-field"><span class="field-label">Descrição</span><textarea name="detailsBefore" placeholder="Descreva a condição atual, desenhos, fotos e informações técnicas."></textarea></label>
-                  <label class="form-field"><span class="field-label">Anexos</span><input class="file-input" type="file" id="beforeFiles" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.step,.stp,.iges,.igs,.dxf,.dwg"></label>
-                  <small class="field-help" id="beforeFilesInfo">Nenhum arquivo selecionado.</small>
-                </div>
-                <div class="document-box">
-                  <h5>Depois da modificação</h5>
-                  <label class="form-field"><span class="field-label">Descrição</span><textarea name="detailsAfter" placeholder="Descreva a condição proposta e os documentos correspondentes."></textarea></label>
-                  <label class="form-field"><span class="field-label">Anexos</span><input class="file-input" type="file" id="afterFiles" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.step,.stp,.iges,.igs,.dxf,.dwg"></label>
-                  <small class="field-help" id="afterFilesInfo">Nenhum arquivo selecionado.</small>
-                </div>
-              </div>
-            </section>
-
-            <section class="flow-section" id="capacityDetailSection">
-              <div class="flow-section-heading"><div><h4>Capacidade produtiva</h4><p>Compare a capacidade semanal anterior com a nova capacidade prevista.</p></div></div>
-              <div class="section-disabled" id="capacityDisabled" hidden>Não foi informado impacto na capacidade produtiva.</div>
-              <div id="capacityContent">
-                <div class="flow-grid-2">
-                  <label class="form-field"><span class="field-label">Capacidade anterior <b aria-hidden="true">*</b></span><div class="unit-input"><input type="number" name="previousCapacity" min="0" step="1"><span>peças/semana</span></div></label>
-                  <label class="form-field"><span class="field-label">Nova capacidade <b aria-hidden="true">*</b></span><div class="unit-input"><input type="number" name="newCapacity" min="0" step="1"><span>peças/semana</span></div></label>
-                </div>
-                <div class="calculated-strip" style="margin-top:14px">
-                  <div class="calculated-box"><span>Variação absoluta</span><strong id="capacityDelta">0 peças/semana</strong></div>
-                  <div class="calculated-box"><span>Variação percentual</span><strong id="capacityPercent">0,00%</strong></div>
-                  <div class="calculated-box"><span>Referência de flexibilidade</span><strong>+20%</strong></div>
-                </div>
-                <p class="notice warning" style="margin-top:14px">A capacidade padrão semanal deve suportar a produção do volume adicional +20% no período de pico sem depender de soluções temporárias.</p>
-              </div>
-            </section>
+          <div class="stepper-shell">
+            <ol class="stepper" aria-label="Etapas para criação da F4">
+              <li class="step"><a class="step-link" href="./nova-f4.html"><span class="step-number">1</span><span class="step-content"><strong>Dados gerais</strong></span></a></li>
+              <li class="step"><a class="step-link" href="./nova-f4-impactos.html"><span class="step-number">2</span><span class="step-content"><strong>Impactos</strong></span></a></li>
+                <li class="step is-active" aria-current="step"><a class="step-link" href="./nova-f4-impactos-detalhes.html" aria-label="Ir para o detalhamento da etapa 2: Impactos"><span class="step-number">2.1</span><span class="step-content"><strong>Detalhamento</strong></span></a></li>
+              <li class="step"><a class="step-link" href="./nova-f4-doa.html"><span class="step-number">3</span><span class="step-content"><strong>DOA</strong></span></a></li>
+            </ol>
           </div>
         </section>
 
-        <footer class="form-actions">
-          <div class="autosave-status" id="autosaveStatus" aria-live="polite">Nenhuma alteração salva nesta sessão.</div>
-          <div class="form-actions-buttons">
-            <a class="secondary-button back-button" href="./nova-f4-impactos.html">Voltar aos impactos</a>
-            <button class="secondary-button" type="button" id="saveDraftButton">Salvar rascunho</button>
-            <button class="primary-button" type="submit">Continuar para DOA <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg></button>
-          </div>
-        </footer>
-      </form>
-    </div></main>
+        <form class="new-f4-form" id="impactDetailsForm" novalidate>
+          <section class="form-card">
+            <div class="form-card-header detail-page-header">
+              <div>
+                <p class="section-kicker">Etapa 2 de 3 · Detalhamento</p>
+                <h3>Detalhamento dos impactos</h3>
+                <p>Descreva como os impactos técnicos e econômicos foram formados e registre as referências afetadas pela modificação.</p>
+              </div>
+              <div class="detail-header-context" aria-label="Contexto da proposta">
+                <span>Moeda da proposta</span>
+                <strong id="proposalCurrency">EUR</strong>
+              </div>
+            </div>
+
+            <div class="impact-detail-context" aria-label="Resumo dos impactos declarados">
+              <div><span>Preço técnico</span><strong id="technicalContext">Não informado</strong></div>
+              <div><span>Ferramental</span><strong id="toolingContext">Não informado</strong></div>
+              <div><span>SET</span><strong id="setContext">Não informado</strong></div>
+              <div><span>Capacidade</span><strong id="capacityContext">Não informado</strong></div>
+            </div>
+
+            <div class="flow-card-content">
+              <section class="flow-section">
+                <div class="flow-section-heading"><div><h4>Impactos técnicos</h4><p>Registre o impacto CSR e a variação de peso causada pela modificação.</p></div></div>
+                <div class="flow-grid-2">
+                  <fieldset class="choice-group compact-choice-group">
+                    <legend>Existe impacto CSR?</legend>
+                    <div class="binary-choice">
+                      <label class="binary-option"><input type="radio" name="csrImpact" value="Sim"><span class="binary-option-ui"><span class="binary-option-indicator"></span>Sim</span></label>
+                      <label class="binary-option"><input type="radio" name="csrImpact" value="Não" checked><span class="binary-option-ui"><span class="binary-option-indicator"></span>Não</span></label>
+                    </div>
+                  </fieldset>
+                  <label class="form-field">
+                    <span class="field-label">Impacto no peso</span>
+                    <div class="unit-input"><input type="number" name="weightImpact" step="0.001" value="0"><span>g</span></div>
+                    <small class="field-help">Informe valor positivo para aumento e negativo para redução de peso.</small>
+                  </label>
+                </div>
+              </section>
+
+              <section class="flow-section" id="partPriceSection">
+                <div class="flow-section-heading"><div><h4>Composição do impacto no preço da peça</h4><p>Detalhe os componentes que formam o gap do preço da peça informado na síntese econômica.</p></div></div>
+                <div class="section-disabled" id="partPriceDisabled" hidden>O impacto no preço técnico foi marcado como “Não” na síntese econômica.</div>
+                <div id="partPriceContent">
+                  <div class="cost-breakdown detail-cost-breakdown">
+                    <label class="form-field"><span class="field-label">Material</span><input type="number" name="materialCost" min="0" step="0.001" value="0"></label>
+                    <label class="form-field"><span class="field-label">Custo direto <small>(mão de obra)</small></span><input type="number" name="directCost" min="0" step="0.001" value="0"></label>
+                    <label class="form-field"><span class="field-label">Custo indireto</span><input type="number" name="indirectCost" min="0" step="0.001" value="0"></label>
+                    <label class="form-field"><span class="field-label">Custos gerais + margem</span><input type="number" name="generalMargin" min="0" step="0.001" value="0"></label>
+                    <label class="form-field"><span class="field-label">Embalagem</span><input type="number" name="partPackaging" min="0" step="0.001" value="0"></label>
+                  </div>
+                  <div class="calculated-strip detail-calculated-strip">
+                    <div class="calculated-box"><span>Impacto calculado</span><strong id="partPriceTotal">€ 0,000</strong></div>
+                    <div class="calculated-box"><span>Valor declarado</span><strong id="partPriceDeclared">€ 0,000</strong></div>
+                    <div class="calculated-box" id="partPriceDifferenceBox"><span>Diferença</span><strong id="partPriceDifference">€ 0,000</strong></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="flow-section" id="toolingSection">
+                <div class="flow-section-heading"><div><h4>Detalhamento de ferramental</h4><p>Associe o gap de ferramental à referência IDO correspondente.</p></div></div>
+                <div class="section-disabled" id="toolingDisabled" hidden>O impacto de ferramental foi marcado como “Não” na síntese econômica.</div>
+                <div class="flow-grid-2" id="toolingContent">
+                  <label class="form-field"><span class="field-label">Referência IDO <b aria-hidden="true">*</b></span><input type="text" name="idoReference" maxlength="80" placeholder="Ex.: IDO-000123"></label>
+                  <label class="form-field"><span class="field-label">Valor de ferramental declarado</span><input type="number" id="toolingDetailAmount" min="0" step="0.01" readonly></label>
+                </div>
+              </section>
+
+              <section class="flow-section" id="setSection">
+                <div class="flow-section-heading">
+                  <div><h4>Composição do SET</h4><p>Informe quantidade e custo unitário. O total de cada linha e o total SET são calculados automaticamente.</p></div>
+                  <span class="calculation-tag">Quantidade × custo unitário</span>
+                </div>
+                <div class="section-disabled" id="setDisabled" hidden>O impacto de SET foi marcado como “Não” na síntese econômica.</div>
+                <div id="setContent">
+                  <div class="flow-table-wrap set-breakdown-wrap">
+                    <table class="flow-table set-breakdown-table" aria-label="Composição detalhada do SET">
+                      <thead><tr><th>Seção</th><th>Descrição</th><th>Quantidade</th><th>Custo unitário</th><th>Total automático</th><th></th></tr></thead>
+                      <tbody id="setRows"></tbody>
+                    </table>
+                  </div>
+                  <button class="add-row-button" type="button" id="addSetRow">+ Adicionar custo adicional</button>
+                  <div class="calculated-strip detail-calculated-strip">
+                    <div class="calculated-box"><span>Total SET sem custos financeiros</span><strong id="setSubtotal">€ 0,00</strong></div>
+                    <div class="calculated-box"><span>SET declarado</span><strong id="setDeclared">€ 0,00</strong></div>
+                    <div class="calculated-box" id="setDifferenceBox"><span>Diferença</span><strong id="setDifference">€ 0,00</strong></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="flow-section" id="financialSection">
+                <div class="flow-section-heading"><div><h4>Condições financeiras e amortização</h4><p>Complete as condições financeiras vinculadas ao SET e à embalagem específica.</p></div></div>
+                <div class="section-disabled" id="financialDisabled" hidden>Não há impacto de SET nem de embalagem específica para detalhar.</div>
+                <div id="financialContent">
+                  <div class="flow-grid-3">
+                    <label class="form-field"><span class="field-label">Quantidade de amortização</span><input type="number" name="amortizationQuantity" min="0" step="1" placeholder="Nº de peças"></label>
+                    <label class="form-field"><span class="field-label">Duração estimada</span><select name="estimatedDuration"><option value="">Selecione</option><option>6 meses</option><option>12 meses</option><option>18 meses</option><option>24 meses</option><option>36 meses</option><option>48 meses</option><option>Outro</option></select></label>
+                    <label class="form-field"><span class="field-label">Taxa financeira</span><div class="unit-input"><input type="number" name="financialFeeRate" min="0" step="0.01" value="0"><span>%</span></div></label>
+                    <label class="form-field"><span class="field-label">Valor dos custos financeiros</span><input type="number" name="financialFeeAmount" min="0" step="0.01" value="0"></label>
+                    <label class="form-field"><span class="field-label">Token</span><input type="number" name="tokenAmount" min="0" step="0.01" value="0"></label>
+                    <label class="form-field"><span class="field-label">Valor amortizado da embalagem específica</span><input type="number" name="amortizedPackaging" min="0" step="0.01" value="0"></label>
+                  </div>
+                  <p class="notice">A taxa e o valor dos custos financeiros permanecem separados. A fórmula corporativa para cálculo automático não está definida no front-end.</p>
+                </div>
+              </section>
+
+              <section class="flow-section references-section">
+                <div class="flow-section-heading"><div><h4>Referências impactadas pela modificação</h4><p>Cadastre as referências afetadas. O impacto total de cada linha é calculado automaticamente.</p></div></div>
+                <label class="form-field modification-title-field">
+                  <span class="field-label">Título da modificação</span>
+                  <input type="text" id="modificationTitle" readonly placeholder="Título informado nos Dados gerais">
+                </label>
+                <div class="flow-table-wrap references-table-wrap">
+                  <table class="flow-table references-table" aria-label="Lista de referências impactadas">
+                    <thead><tr><th>Referência atual</th><th id="lastPriceHeader">Último preço validado</th><th>Diversidade adicionada</th><th>Nova referência</th><th id="partImpactHeader">Impacto peça s/ Token</th><th id="tokenImpactHeader">Impacto Token SET</th><th>Impacto total</th><th>Outras informações</th><th></th></tr></thead>
+                    <tbody id="referenceRows"></tbody>
+                  </table>
+                </div>
+                <button class="add-row-button" type="button" id="addReferenceRow">+ Adicionar referência</button>
+                <p class="notice">Ao marcar <strong>Diversidade adicionada = Sim</strong>, a referência atual permanece válida juntamente com a nova referência; por isso a nova referência se torna obrigatória.</p>
+              </section>
+
+              <section class="flow-section">
+                <div class="flow-section-heading"><div><h4>Detalhes antes e depois da modificação</h4><p>Registre informações e documentos que permitam comparar claramente o estado atual e o estado proposto.</p></div></div>
+                <div class="documentation-grid">
+                  <div class="document-box">
+                    <div class="document-box-title"><span class="document-state-index">A</span><div><h5>Antes da modificação</h5><p>2D, 3D, fotos, desenhos e outras evidências.</p></div></div>
+                    <label class="form-field"><span class="field-label">Descrição</span><textarea name="detailsBefore" maxlength="2000" placeholder="Descreva a condição atual, referências, desenho, processo ou situação existente."></textarea></label>
+                    <div class="form-field upload-field">
+                      <span class="field-label">Anexos</span>
+                      <label class="file-dropzone" for="beforeFiles" id="beforeDropzone">
+                        <input class="file-input" type="file" id="beforeFiles" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.step,.stp,.iges,.igs,.dxf,.dwg">
+                        <span class="file-dropzone-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7l-5-5Zm0 2.5L16.5 7H14V4.5ZM12 18a1 1 0 0 1-1-1v-4.59l-1.3 1.3a1 1 0 1 1-1.4-1.42l3-3a1 1 0 0 1 1.4 0l3 3a1 1 0 1 1-1.4 1.42l-1.3-1.3V17a1 1 0 0 1-1 1Z"/></svg>
+                        </span>
+                        <span class="file-dropzone-title"><strong>Clique para enviar arquivos</strong> ou arraste e solte aqui</span>
+                        <span class="file-dropzone-help">PDF, imagens, documentos e arquivos técnicos 2D/3D</span>
+                      </label>
+                      <div class="file-selection-info" id="beforeFilesInfo" aria-live="polite">Nenhum arquivo selecionado.</div>
+                    </div>
+                  </div>
+                  <div class="document-box">
+                    <div class="document-box-title"><span class="document-state-index">B</span><div><h5>Depois da modificação</h5><p>2D, 3D, fotos, desenhos e outras evidências.</p></div></div>
+                    <label class="form-field"><span class="field-label">Descrição</span><textarea name="detailsAfter" maxlength="2000" placeholder="Descreva a condição proposta e o resultado esperado após a modificação."></textarea></label>
+                    <div class="form-field upload-field">
+                      <span class="field-label">Anexos</span>
+                      <label class="file-dropzone" for="afterFiles" id="afterDropzone">
+                        <input class="file-input" type="file" id="afterFiles" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.step,.stp,.iges,.igs,.dxf,.dwg">
+                        <span class="file-dropzone-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7l-5-5Zm0 2.5L16.5 7H14V4.5ZM12 18a1 1 0 0 1-1-1v-4.59l-1.3 1.3a1 1 0 1 1-1.4-1.42l3-3a1 1 0 0 1 1.4 0l3 3a1 1 0 1 1-1.4 1.42l-1.3-1.3V17a1 1 0 0 1-1 1Z"/></svg>
+                        </span>
+                        <span class="file-dropzone-title"><strong>Clique para enviar arquivos</strong> ou arraste e solte aqui</span>
+                        <span class="file-dropzone-help">PDF, imagens, documentos e arquivos técnicos 2D/3D</span>
+                      </label>
+                      <div class="file-selection-info" id="afterFilesInfo" aria-live="polite">Nenhum arquivo selecionado.</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="flow-section" id="capacityDetailSection">
+                <div class="flow-section-heading"><div><h4>Impacto na capacidade produtiva</h4><p>Detalhe a capacidade semanal atual e a nova capacidade para os itens afetados.</p></div></div>
+                <div class="section-disabled" id="capacityDisabled" hidden>O impacto na capacidade produtiva foi marcado como “Não” na síntese econômica.</div>
+                <div id="capacityContent">
+                  <div class="flow-table-wrap capacity-table-wrap">
+                    <table class="flow-table capacity-table" aria-label="Detalhamento da capacidade produtiva">
+                      <thead><tr><th>Item / detalhe</th><th>Capacidade anterior<br><small>peças/semana, sem flexibilidade +20%</small></th><th>Nova capacidade<br><small>peças/semana, sem flexibilidade +20%</small></th><th>Variação</th><th></th></tr></thead>
+                      <tbody id="capacityRows"></tbody>
+                    </table>
+                  </div>
+                  <button class="add-row-button" type="button" id="addCapacityRow">+ Adicionar item de capacidade</button>
+                  <div class="calculated-strip detail-calculated-strip capacity-summary">
+                    <div class="calculated-box"><span>Capacidade anterior total</span><strong id="previousCapacityTotal">0 peças/semana</strong></div>
+                    <div class="calculated-box"><span>Nova capacidade total</span><strong id="newCapacityTotal">0 peças/semana</strong></div>
+                    <div class="calculated-box"><span>Variação total</span><strong id="capacityDelta">0 peças/semana</strong><small id="capacityPercent">0,00%</small></div>
+                  </div>
+                  <p class="notice warning">A capacidade semanal padrão deve suportar a produção do volume adicional +20% no período de pico sem depender de soluções temporárias, como turnos extraordinários de fim de semana.</p>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <footer class="form-actions">
+            <div class="autosave-status" id="autosaveStatus" aria-live="polite">Nenhuma alteração salva nesta sessão.</div>
+            <div class="form-actions-buttons">
+              <a class="secondary-button back-button" href="./nova-f4-impactos.html">Voltar aos impactos</a>
+              <button class="secondary-button" type="button" id="saveDraftButton">Salvar rascunho</button>
+              <button class="primary-button" type="submit">Continuar para DOA <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.2 5.6 5.4 5.4H4v2h14.6l-5.4 5.4 1.4 1.4L22.4 12l-7.8-7.8-1.4 1.4Z"/></svg></button>
+            </div>
+          </footer>
+        </form>
+      </div>
+    </main>
   </div>
 </div>
 <script type="module" src="./js/pages/nova-f4-impactos-detalhes.js"></script>
