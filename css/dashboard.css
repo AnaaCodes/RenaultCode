@@ -108,7 +108,7 @@
 .flow-header > p { max-width: 350px; margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.4; text-align: right; }
 .flow-track {
   display: grid;
-  grid-template-columns: repeat(5, 170px);
+  grid-template-columns: repeat(6, 170px);
   align-items: stretch;
   justify-content: start;
   gap: 14px;
@@ -135,6 +135,12 @@
 .flow-value { position: relative; font-size: 29px; font-weight: 500; line-height: 1; }
 .flow-value::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 28px; height: 2px; transform: translateX(-50%); background: currentColor; }
 .flow-label { margin-top: 8px; color: var(--text-secondary); font-size: 12px; }
+.flow-stage[data-dashboard-filter="all"] .flow-value { color: var(--purple); }
+.flow-stage[data-dashboard-filter="commercial"] .flow-value,
+.flow-stage[data-dashboard-filter="technical"] .flow-value { color: var(--yellow); }
+.flow-stage[data-dashboard-filter="cve"] .flow-value { color: var(--blue); }
+.flow-stage[data-dashboard-filter="approved"] .flow-value { color: var(--green); }
+.flow-stage[data-dashboard-filter="rejected"] .flow-value { color: var(--red); }
 .draft-stage .flow-value { color: gray; }
 .submitted-stage .flow-value { color: var(--blue); }
 .analysis-stage .flow-value { color: var(--purple); }
@@ -144,7 +150,7 @@
 @media (max-width: 1050px) {
   .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .attention-grid { grid-template-columns: 1fr; }
-  .flow-track { grid-template-columns: repeat(5, 150px); overflow-x: auto; padding-bottom: 5px; }
+  .flow-track { grid-template-columns: repeat(6, 150px); overflow-x: auto; padding-bottom: 5px; }
 }
 @media (max-width: 620px) {
   .quick-actions { grid-template-columns: 1fr; }
