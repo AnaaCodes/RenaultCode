@@ -791,39 +791,6 @@
 
 
 /* =========================================================
-   FUNDO GEOMÉTRICO
-   ========================================================= */
-
-.main-content::before {
-  content: "";
-
-  position:
-    absolute;
-
-  inset: 0;
-
-  z-index: 0;
-
-  opacity: .24;
-
-  pointer-events:
-    none;
-
-  background:
-    url("../assets/images/background-renault.png")
-    78% 18%
-    /
-    min(
-      920px,
-      76vw
-    )
-    auto
-    no-repeat
-    fixed;
-}
-
-
-/* =========================================================
    CONTAINER DA PÁGINA
    ========================================================= */
 

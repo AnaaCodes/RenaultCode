@@ -4,20 +4,16 @@ import { showToast } from './toast.js';
 import { getActiveProfile, hasPermission, setActiveProfile } from './user-session.js';
 
 function redirectForProfile(profile) {
-  if (profile.id === 'manager') {
-    window.location.href = './projetos.html';
-  } else {
-    window.location.href = './index.html';
-  }
+  window.location.href = profile.homePage || './index.html';
 }
 
 function setupProfileSwitcher() {
   const switcher = document.querySelector('#profileSwitcher');
   const button = document.querySelector('#profileButton');
   const menu = document.querySelector('#profileMenu');
-  const option = menu?.querySelector('[data-profile-id]');
+  const options = [...(menu?.querySelectorAll('[data-profile-id]') || [])];
 
-  if (!switcher || !button || !menu || !option) return;
+  if (!switcher || !button || !menu || !options.length) return;
 
   let closeTimer = null;
 
@@ -51,10 +47,10 @@ function setupProfileSwitcher() {
   });
   switcher.addEventListener('mouseleave', scheduleClose);
 
-  option.addEventListener('click', () => {
+  options.forEach(option => option.addEventListener('click', () => {
     const nextProfile = option.dataset.profileId;
     if (setActiveProfile(nextProfile)) redirectForProfile(getActiveProfile());
-  });
+  }));
 
   document.addEventListener('click', event => {
     if (!switcher.contains(event.target)) closeMenu();
@@ -76,7 +72,7 @@ function applyRolePermissions() {
 
 export function mountAppShell({ activePage, title }) {
   if (activePage === 'nova-f4' && !hasPermission('createF4')) {
-    window.location.replace('./projetos.html');
+    window.location.replace('./index.html');
     return false;
   }
 

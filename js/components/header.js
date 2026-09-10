@@ -1,4 +1,4 @@
-import { getActiveProfile, getAlternateProfile } from '../core/user-session.js';
+import { getActiveProfile, getOtherProfiles } from '../core/user-session.js';
 
 function avatarMarkup(profile, className = 'profile-avatar') {
   if (profile.avatar) {
@@ -11,7 +11,7 @@ function avatarMarkup(profile, className = 'profile-avatar') {
 export function renderHeader(title) {
   const mount = document.querySelector('#headerMount');
   const current = getActiveProfile();
-  const alternate = getAlternateProfile();
+  const alternatives = getOtherProfiles();
 
   mount.innerHTML = `
     <header class="topbar">
@@ -37,14 +37,15 @@ export function renderHeader(title) {
 
         <div class="profile-menu" id="profileMenu" role="menu" aria-label="Trocar perfil" hidden>
           <p class="profile-menu-label">Trocar perfil</p>
-          <button class="profile-menu-option" type="button" role="menuitem" data-profile-id="${alternate.id}">
-            <span class="profile-menu-avatar">${avatarMarkup(alternate, 'profile-avatar')}</span>
-            <span class="profile-menu-copy">
-              <strong>${alternate.name}</strong>
-              <small>${alternate.role}</small>
-            </span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.3 10.7 4l8 8-8 8-1.4-1.3 6.7-6.7-6.7-6.7Z"/></svg>
-          </button>
+          ${alternatives.map(profile => `
+            <button class="profile-menu-option" type="button" role="menuitem" data-profile-id="${profile.id}">
+              <span class="profile-menu-avatar">${avatarMarkup(profile, 'profile-avatar')}</span>
+              <span class="profile-menu-copy">
+                <strong>${profile.name}</strong>
+                <small>${profile.role}</small>
+              </span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.3 5.3 10.7 4l8 8-8 8-1.4-1.3 6.7-6.7-6.7-6.7Z"/></svg>
+            </button>`).join('')}
         </div>
       </div>
     </header>`;
