@@ -1,350 +1,39 @@
-import {
-  mountAppShell
-} from '../core/app-shell.js';
+import { mountAppShell } from '../core/app-shell.js';
+import { showToast } from '../core/toast.js';
+import { getActiveProfile } from '../core/user-session.js';
+import { getF4ById, getF4Code, saveWorkflowState } from '../services/f4-service.js';
 
-import {
-  getF4ById,
-  getF4Code
-} from '../services/f4-service.js';
-
-
-/* =========================================================
-   ESTRUTURA
-   ========================================================= */
-
-mountAppShell({
-  activePage: 'minhas-f4',
-  title: 'Detalhes da F4'
-});
-
-
-/* =========================================================
-   IDENTIFICAÇÃO DO REGISTRO
-   ========================================================= */
-
-const params =
-  new URLSearchParams(
-    location.search
-  );
-
-
-const f4 =
-  getF4ById(
-    params.get('id')
-  );
-
-
-const content =
-  document.querySelector(
-    '#detailContent'
-  );
-
-
-/* =========================================================
-   F4 NÃO ENCONTRADA
-   ========================================================= */
-
-if (!f4) {
-
-  content.innerHTML = `
-    <section
-      class="card detail-card"
-    >
-
-      <h3>
-        F4 não encontrada
-      </h3>
-
-      <p
-        class="detail-description"
-      >
-        O registro informado não existe nesta demonstração.
-      </p>
-
-      <p>
-        <a
-          class="back-link"
-          href="./minhas-f4.html"
-        >
-          ← Voltar para Minhas F4
-        </a>
-      </p>
-
-    </section>
-  `;
-
+mountAppShell({activePage:'minhas-f4',title:'Detalhes da F4'});
+const params=new URLSearchParams(location.search), profile=getActiveProfile(), content=document.querySelector('#detailContent');
+let f4=getF4ById(params.get('id'));
+const roleConfig={
+  commercial:{title:'Validação comercial',subtitle:'Compras',areas:['Dados gerais','Preço da peça','SET / TEF','Ferramental','Condições comerciais','DOA','Documentação / anexos','Outro']},
+  technical:{title:'Validação técnica',subtitle:'Engenharia',areas:['Dados gerais','Impactos técnicos','Referências impactadas','Capacidade produtiva','Desenhos / anexos','Outro']},
+  manager:{title:'Decisão do gerente de projeto',subtitle:'Gerente do projeto',areas:['Dados gerais','Impactos','Validação comercial','Validação técnica','DOA','Documentação / anexos','Outro']},
+  cve:{title:'Decisão final do CVE',subtitle:'CVE',areas:['Impacto econômico','DOA','Validação comercial','Validação técnica','Decisão do gerente','Documentação / anexos','Outro']}
+};
+const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+const fmt=v=>v?new Date(v).toLocaleDateString('pt-BR'):'—';
+const dateTime=v=>v?new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+const cls=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,'-');
+function elapsed(since){if(!since)return '—';const ms=Math.max(0,Date.now()-new Date(since));const d=Math.floor(ms/86400000);if(d>0)return `há ${d} dia${d===1?'':'s'}`;const h=Math.max(1,Math.floor(ms/3600000));return `há ${h}h`;}
+function latest(step){return [...(f4.history||[])].reverse().find(h=>h.step===step);}
+function approvalStatus(step){const h=latest(step);if(!h)return 'Pendente'; if(['Aprovada','Concluída'].includes(h.status))return 'Aprovado';if(h.status==='Rejeitada')return 'Rejeitado';if(h.status==='Devolvida')return 'Devolvido';return h.status;}
+function approvalPanel(){const rows=[['commercial','Validação comercial','Compras'],['technical','Validação técnica','Engenharia'],['manager','Decisão do gerente','Gerente do projeto'],['cve','Decisão final','CVE']];return `<section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">Aprovações</p><h3>Fluxo de validação</h3><p>O status é derivado do fluxo registrado para esta F4.</p></div></div><div class="approval-list">${rows.map(([k,l,s])=>{const h=latest(k),st=approvalStatus(k);return `<div class="approval-row"><div><strong>${l}</strong><small>${s}${h?.by?` · ${esc(h.by)}`:''}</small></div><div class="approval-row-status"><span class="review-status ${cls(st)}">${st}</span><small>${h?.date?dateTime(h.date):'Ainda não iniciada'}</small></div></div>`}).join('')}</div></section>`;}
+function guidancePanel(){const notes=(f4.history||[]).filter(h=>h.guidance||h.status==='Devolvida');return `<section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">Orientações</p><h3>Pendências e pontos de correção</h3><p>Devoluções e justificativas ficam centralizadas nesta F4.</p></div></div>${notes.length?`<div class="guidance-list">${notes.map(n=>`<article class="guidance-entry"><div><strong>${esc(n.label)}</strong><small>${dateTime(n.date)}${n.returnedTo?` · devolvida para ${esc(n.returnedTo)}`:''}</small></div>${n.guidance?`<p>${esc(n.guidance)}</p>`:''}</article>`).join('')}</div>`:`<div class="empty-guidance"><strong>Nenhuma orientação registrada.</strong><span>Quando houver devolução ou recusa, a justificativa aparecerá aqui.</span></div>`}</section>`;}
+function processTimeline(){const required=[['creation','Criação'],['commercial','Validação comercial'],['technical','Validação técnica'],['cve','Decisão do CVE'],['final',f4.status==='Rejeitada'?'Cancelada':'Aprovada / cancelada']];return `<div class="process-timeline">${required.map(([step,label])=>{const h=latest(step);const current=(step==='commercial'&&f4.currentStep==='commercial')||(step==='technical'&&f4.currentStep==='technical')||(step==='cve'&&f4.currentStep==='cve')||(step==='creation'&&['creation','supplier'].includes(f4.currentStep));const done=!!h&&['Aprovada','Concluída','Rejeitada'].includes(h.status);return `<div class="process-row ${done?'done':''} ${current?'current':''}"><span class="process-dot"></span><div><strong>${label}</strong><small>${h?.date?fmt(h.date):'—'}${h?.status?` · ${h.status}`:''}</small></div></div>`}).join('')}${(f4.history||[]).filter(h=>h.status==='Devolvida').map(h=>`<div class="return-event"><span>↩</span><div><strong>Devolvida para ${esc(h.returnedTo||'correção')}</strong><small>${fmt(h.date)} · por ${esc(h.by||'área responsável')}</small></div></div>`).join('')}</div>`;}
+function actionWorkspace(){
+  if(['Aprovada','Rejeitada'].includes(f4.status))return '';
+  if(profile.id==='supplier'&&f4.currentStep==='supplier'&&f4.status==='Devolvida')return `<section class="card detail-card action-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>Correção pelo fornecedor</h3><p>Revise as orientações registradas e reenvie a F4 para a validação comercial.</p></div></div><div class="review-form-footer"><span>A F4 retornará para Compras após o reenvio.</span><button class="review-submit-button" id="resubmitButton">Reenviar para validação comercial</button></div></section>`;
+  const cfg=roleConfig[profile.id]; if(!cfg)return '';
+  if(f4.currentStep!==profile.id){return `<section class="card detail-card waiting-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>${cfg.title}</h3><p>Esta F4 não está aguardando uma decisão deste perfil neste momento.</p></div><span class="responsibility-chip">Responsável atual: ${esc(f4.currentAssignee?.role||f4.sector)}</span></div></section>`;}
+  return `<section class="card detail-card review-workspace"><div class="detail-section-heading review-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>${cfg.title}</h3><p>Registre a decisão desta etapa. As opções exibidas correspondem ao estado atual da F4.</p></div><span class="responsibility-chip">${cfg.subtitle}</span></div><form id="roleReviewForm" class="role-review-form"><fieldset class="review-decision-group"><legend>Decisão</legend><div class="review-decision-grid"><label class="review-decision-option"><input type="radio" name="decision" value="approve"><span class="decision-icon approve">✓</span><span><strong>Aprovar</strong><small>${profile.id==='commercial'?'Encaminhar para Engenharia.':profile.id==='technical'?'Encaminhar para o gerente do projeto.':profile.id==='manager'?'Encaminhar para decisão do CVE.':'Concluir a F4 como aprovada.'}</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="return"><span class="decision-icon return">↩</span><span><strong>Devolver para correção</strong><small>Exige indicação do ponto com erro e orientação.</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="reject"><span class="decision-icon reject">×</span><span><strong>Não aprovar</strong><small>Encerra a F4 como rejeitada e exige justificativa.</small></span></label></div></fieldset><div class="correction-fields" id="correctionFields" hidden><fieldset class="error-location-group"><legend>Onde está o erro ou ponto de atenção? <b>*</b></legend><p>Marque uma ou mais áreas.</p><div class="error-location-grid">${cfg.areas.map(a=>`<label><input type="checkbox" name="area" value="${esc(a)}"><span>${esc(a)}</span></label>`).join('')}</div></fieldset><label class="review-guidance-field"><span>Orientações / justificativa <b>*</b></span><textarea name="guidance" maxlength="1600" placeholder="Explique o problema, o que precisa ser corrigido e o resultado esperado."></textarea><small>O texto ficará visível para quem receber a F4.</small></label></div><div class="review-form-footer"><span>Responsável: ${esc(profile.name)} · ${esc(profile.role)}</span><button class="review-submit-button" type="submit">Registrar decisão</button></div></form></section>`;
 }
-
-
-/* =========================================================
-   F4 ENCONTRADA
-   ========================================================= */
-
-else {
-
-  const f4Code =
-    getF4Code(f4);
-
-
-  const statusClass =
-    f4.status
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(
-        /[\u0300-\u036f]/g,
-        ''
-      )
-      .replace(
-        /\s+/g,
-        '-'
-      );
-
-
-  const updatedAt =
-    new Date(
-      `${f4.updatedAt}T12:00:00`
-    )
-      .toLocaleDateString(
-        'pt-BR'
-      );
-
-
-  const dueDate =
-    new Date(
-      `${f4.dueDate}T12:00:00`
-    )
-      .toLocaleDateString(
-        'pt-BR'
-      );
-
-
-  content.innerHTML = `
-
-    <section
-      class="detail-heading"
-    >
-
-      <div>
-
-        <a
-          class="back-link"
-          href="./minhas-f4.html"
-        >
-          ← Voltar para Minhas F4
-        </a>
-
-
-        <h2>
-          ${f4Code} — ${f4.title}
-        </h2>
-
-
-        <p
-          class="detail-subtitle"
-        >
-          ${f4.description}
-        </p>
-
-      </div>
-
-
-      <span
-        class="status-badge ${statusClass}"
-      >
-        ${f4.status}
-      </span>
-
-    </section>
-
-
-    <div
-      class="detail-grid"
-    >
-
-
-      <section
-        class="card detail-card"
-      >
-
-        <h3>
-          Informações da solicitação
-        </h3>
-
-
-        <div
-          class="detail-fields"
-        >
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Código F4
-            </span>
-
-            <strong>
-              ${f4Code}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Fornecedor
-            </span>
-
-            <strong>
-              ${f4.supplier}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Proprietário
-            </span>
-
-            <strong>
-              ${f4.owner}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Responsável atual
-            </span>
-
-            <strong>
-              ${f4.responsible}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Setor atual
-            </span>
-
-            <strong>
-              ${f4.sector}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Etapa atual
-            </span>
-
-            <strong>
-              ${f4.stage}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Última atualização
-            </span>
-
-            <strong>
-              ${updatedAt}
-            </strong>
-          </div>
-
-
-          <div
-            class="detail-field"
-          >
-            <span>
-              Prazo
-            </span>
-
-            <strong>
-              ${dueDate}
-            </strong>
-          </div>
-
-
-        </div>
-
-      </section>
-
-
-      <aside
-        class="card detail-card"
-      >
-
-        <h3>
-          Fluxo
-        </h3>
-
-
-        <div
-          class="process-list"
-        >
-
-          <div
-            class="process-item done"
-          >
-            <span
-              class="process-dot"
-            ></span>
-
-            F4 criada
-          </div>
-
-
-          <div
-            class="process-item done"
-          >
-            <span
-              class="process-dot"
-            ></span>
-
-            Informações registradas
-          </div>
-
-
-          <div
-            class="process-item current"
-          >
-            <span
-              class="process-dot"
-            ></span>
-
-            ${f4.stage}
-          </div>
-
-
-          <div
-            class="process-item"
-          >
-            <span
-              class="process-dot"
-            ></span>
-
-            Conclusão
-          </div>
-
-        </div>
-
-      </aside>
-
-    </div>
-  `;
-}
+function transition(decision,areas,guidance){const now=new Date().toISOString(), step=profile.id, label=roleConfig[step].title; f4.history=f4.history||[]; if(decision==='reject'){f4.history.push({step,label,date:now,status:'Rejeitada',by:profile.name,guidance,errorAreas:areas});f4.status='Rejeitada';f4.stage='Rejeitada';f4.currentStep='rejected';f4.sector=profile.id==='cve'?'CVE':profile.role;}
+else if(decision==='return'){f4.history.push({step,label,date:now,status:'Devolvida',by:profile.name,returnedTo:'Fornecedor',guidance,errorAreas:areas});f4.status='Devolvida';f4.stage='Correção pelo fornecedor';f4.currentStep='supplier';f4.returnedToProfile='supplier';f4.returnOrigin=profile.id;f4.currentAssignee={profileId:'supplier',name:f4.supplier,role:'Fornecedor'};f4.responsible=f4.supplier;f4.sector='Fornecedor';f4.currentAssigneeSince=now;}
+else {f4.history.push({step,label,date:now,status:'Aprovada',by:profile.name});const next={commercial:['technical','Em validação técnica','Engenharia',{profileId:'technical',name:'Mariana Silva',role:'Engenharia · Validação técnica'}],technical:['manager','Em decisão do gerente','Gerência do projeto',{profileId:'manager',name:'Marcos Oliveira',role:'Gerente do projeto'}],manager:['cve','Em decisão do CVE','CVE',{profileId:'cve',name:'Analice Mendes',role:'CVE · Decisão final'}]}; if(step==='cve'){f4.history.push({step:'final',label:'Aprovada',date:now,status:'Concluída'});f4.status='Aprovada';f4.stage='Aprovada';f4.currentStep='approved';}else{const [n,status,sector,assignee]=next[step];f4.currentStep=n;f4.status=status;f4.stage=status.replace('Em ','');f4.sector=sector;f4.currentAssignee=assignee;f4.responsible=assignee.name;f4.currentAssigneeSince=now;f4.returnedToProfile=null;f4.assignedProfiles=[...new Set([...(f4.assignedProfiles||[]),n])];}}
+f4.updatedAt=now.slice(0,10);saveWorkflowState(f4);}
+function render(){if(!f4){content.innerHTML='<section class="card detail-card"><h3>F4 não encontrada</h3></section>';return;}content.innerHTML=`<section class="detail-heading"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div></section><div class="detail-grid"><section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">F4</p><h3>Informações da solicitação</h3><p>Dados principais e responsável atual.</p></div></div><div class="current-owner-banner"><div class="current-owner-avatar">${esc((f4.currentAssignee?.name||'?').split(' ').map(n=>n[0]).slice(0,2).join(''))}</div><div><span>F4 está com</span><strong>${esc(f4.currentAssignee?.name||f4.responsible)}</strong><small>${esc(f4.currentAssignee?.role||f4.sector)} · ${elapsed(f4.currentAssigneeSince)}</small></div></div><div class="detail-fields"><div class="detail-field"><span>Código F4</span><strong>${getF4Code(f4)}</strong></div><div class="detail-field"><span>Fornecedor</span><strong>${esc(f4.supplier)}</strong></div><div class="detail-field"><span>Projeto</span><strong>${esc(f4.project||'—')}</strong></div><div class="detail-field"><span>Setor atual</span><strong>${esc(f4.sector)}</strong></div><div class="detail-field"><span>Etapa atual</span><strong>${esc(f4.stage)}</strong></div><div class="detail-field"><span>Última atualização</span><strong>${fmt(f4.updatedAt)}</strong></div><div class="detail-field"><span>Prazo</span><strong>${fmt(f4.dueDate)}</strong></div></div></section><aside class="card detail-card process-card"><div class="detail-section-heading"><div><p class="detail-kicker">Andamento</p><h3>Fluxo da F4</h3></div></div>${processTimeline()}</aside></div><div class="review-information-grid">${approvalPanel()}${guidancePanel()}</div>${actionWorkspace()}${profile.id==='supplier'?'<section class="supplier-readonly-note"><strong>Validações Renault</strong><span>O fornecedor acompanha as decisões e orientações, mas não edita aprovações internas.</span></section>':''}`;setup();}
+function setup(){const form=document.querySelector('#roleReviewForm'),cf=document.querySelector('#correctionFields');if(form){form.querySelectorAll('[name="decision"]').forEach(r=>r.onchange=()=>cf.hidden=!['return','reject'].includes(form.elements.decision.value));form.onsubmit=e=>{e.preventDefault();const decision=form.elements.decision.value;if(!decision)return showToast('Selecione uma decisão.');const areas=[...form.querySelectorAll('[name="area"]:checked')].map(x=>x.value),guidance=form.elements.guidance?.value.trim()||'';if(['return','reject'].includes(decision)&&(!areas.length||!guidance))return showToast('Marque onde está o erro e informe a orientação/justificativa.');transition(decision,areas,guidance);showToast('Decisão registrada e fluxo atualizado.');f4=getF4ById(f4.id);render();};}
+const rb=document.querySelector('#resubmitButton');if(rb)rb.onclick=()=>{const now=new Date().toISOString();f4.history.push({step:'commercial',label:'Validação comercial',date:now,status:'Em andamento',by:'Carlos Braatz'});f4.status='Em validação comercial';f4.stage='Validação comercial';f4.currentStep='commercial';f4.returnedToProfile=null;f4.currentAssignee={profileId:'commercial',name:'Carlos Braatz',role:'Compras · Validação comercial'};f4.responsible='Carlos Braatz';f4.sector='Compras';f4.currentAssigneeSince=now;f4.assignedProfiles=[...new Set([...(f4.assignedProfiles||[]),'commercial'])];f4.updatedAt=now.slice(0,10);saveWorkflowState(f4);showToast('F4 reenviada para validação comercial.');f4=getF4ById(f4.id);render();};}
+render();
