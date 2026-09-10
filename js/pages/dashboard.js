@@ -54,6 +54,16 @@ function configureQuickActions() {
     </button>`);
 }
 
+function configurePriorities() {
+  if (profile.id !== 'supplier') return;
+
+  const attentionGrid = document.querySelector('.attention-grid');
+  const approvalCard = attentionGrid?.querySelector('.approval-attention');
+
+  approvalCard?.remove();
+  attentionGrid?.classList.add('supplier-attention-grid');
+}
+
 function renderAttentionCounts() {
   const counts = getAttentionCounts(profile);
   Object.entries(counts).forEach(([key, value]) => {
@@ -63,6 +73,7 @@ function renderAttentionCounts() {
 }
 
 configureQuickActions();
+configurePriorities();
 renderAttentionCounts();
 
 const tbody = document.querySelector('#workQueueBody');

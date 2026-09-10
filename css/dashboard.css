@@ -57,6 +57,7 @@
 
 .attention-section { display: grid; gap: 12px; }
 .attention-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.attention-grid.supplier-attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .attention-card {
   min-width: 0;
   min-height: 150px;
@@ -149,7 +150,8 @@
 
 @media (max-width: 1050px) {
   .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .attention-grid { grid-template-columns: 1fr; }
+  .attention-grid,
+  .attention-grid.supplier-attention-grid { grid-template-columns: 1fr; }
   .flow-track { grid-template-columns: repeat(6, 150px); overflow-x: auto; padding-bottom: 5px; }
 }
 @media (max-width: 620px) {
