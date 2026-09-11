@@ -60,6 +60,137 @@ function approvalStatus(step) {
   if (h.status === 'Devolvida') return 'Devolvido';
   return h.status;
 }
+
+const historySectorByStep = {
+  creation: 'Fornecedor',
+  supplier: 'Fornecedor',
+  commercial: 'Compras',
+  technical: 'Engenharia',
+  manager: 'Gerência do projeto',
+  cve: 'CVE',
+  final: 'Sistema'
+};
+
+function fallbackHistoryVersion(index) {
+  return `1.0.${index}`;
+}
+
+function nextHistoryVersion() {
+  const history = f4?.history || [];
+  if (!history.length) return '1.0.0';
+  const lastIndex = history.length - 1;
+  const current = String(history[lastIndex]?.version || fallbackHistoryVersion(lastIndex));
+  const match = current.match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!match) return fallbackHistoryVersion(history.length);
+  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+}
+
+function appendHistory(entry) {
+  f4.history = f4.history || [];
+  f4.history.push({ ...entry, version: entry.version || nextHistoryVersion() });
+}
+
+function normalizeSupplierSubmissionHistory() {
+  if (!f4 || !Array.isArray(f4.history)) return;
+
+  const supplierName = f4.supplier || f4.owner || 'Fornecedor';
+  let changed = false;
+
+  f4.history.forEach((entry, index, history) => {
+    const startsCommercialValidation = entry.step === 'commercial'
+      && ['Em andamento', 'Pendente'].includes(entry.status);
+
+    if (!startsCommercialValidation) return;
+
+    const previous = history[index - 1];
+    const isResubmission = previous?.status === 'Devolvida'
+      && (previous?.returnedTo === 'Fornecedor' || previous?.returnedToProfile === 'supplier');
+
+    const expectedLabel = isResubmission
+      ? 'Reenvio para validação comercial'
+      : 'Envio para validação comercial';
+    const expectedDescription = isResubmission
+      ? 'F4 corrigida pelo fornecedor e reenviada para nova validação comercial.'
+      : 'F4 enviada pelo fornecedor para início da validação comercial.';
+
+    if (entry.by !== supplierName) { entry.by = supplierName; changed = true; }
+    if (entry.sector !== 'Fornecedor') { entry.sector = 'Fornecedor'; changed = true; }
+    if (entry.label !== expectedLabel) { entry.label = expectedLabel; changed = true; }
+    if (entry.description !== expectedDescription) { entry.description = expectedDescription; changed = true; }
+    if (entry.newStatus !== 'Em validação comercial') { entry.newStatus = 'Em validação comercial'; changed = true; }
+  });
+
+  // Corrige inclusive estados antigos que já estavam persistidos no localStorage,
+  // sem criar uma nova versão do histórico.
+  if (changed) saveWorkflowState(f4);
+}
+
+function historySector(entry) {
+  return entry.sector || historySectorByStep[entry.step] || 'Sistema';
+}
+
+function historyDescription(entry) {
+  const areas = Array.isArray(entry.errorAreas) && entry.errorAreas.length
+    ? ` Áreas indicadas: ${entry.errorAreas.join(', ')}.`
+    : '';
+  if (entry.guidance) return `${entry.guidance}${areas}`;
+  if (entry.description) return `${entry.description}${areas}`;
+  if (entry.step === 'creation') return 'F4 criada e registrada no sistema.';
+  if (entry.status === 'Devolvida') return `F4 devolvida para ${entry.returnedTo || 'correção'}.${areas}`;
+  if (entry.status === 'Rejeitada') return `Alteração encerrada como rejeitada.${areas}`;
+  if (entry.status === 'Aprovada') return `${entry.label || 'Etapa'} validada e aprovada.`;
+  if (entry.status === 'Concluída') return 'Fluxo da F4 concluído com aprovação final.';
+  if (entry.status === 'Em andamento') return `${entry.label || 'Etapa'} iniciada.`;
+  return `Registro de alteração na etapa ${entry.label || entry.step || 'da F4'}.`;
+}
+
+function historyNewStatus(entry) {
+  if (entry.newStatus) return entry.newStatus;
+  if (entry.step === 'creation') return entry.status || 'Criada';
+  if (entry.status === 'Devolvida' || entry.status === 'Rejeitada') return entry.status;
+  if (entry.status === 'Concluída' || entry.step === 'final') return 'Aprovada';
+  if (entry.status === 'Aprovada') {
+    const nextStatusByStep = {
+      commercial: 'Em validação técnica',
+      technical: 'Em decisão do gerente',
+      manager: 'Em decisão do CVE',
+      cve: 'Aprovada'
+    };
+    return nextStatusByStep[entry.step] || entry.status;
+  }
+  if (entry.status === 'Em andamento' && entry.step === 'commercial') return 'Em validação comercial';
+  return entry.status || 'Pendente';
+}
+
+function changeHistoryPanel() {
+  const history = (f4.history || []).map((entry, index) => ({
+    ...entry,
+    version: entry.version || fallbackHistoryVersion(index)
+  })).reverse();
+
+  const rows = history.map(entry => `<tr>
+    <td><strong class="history-version">${esc(entry.version)}</strong></td>
+    <td><strong>${esc(entry.label || entry.step || 'Alteração da F4')}</strong></td>
+    <td>${esc(historyDescription(entry))}</td>
+    <td><span class="review-status ${cls(historyNewStatus(entry))}">${esc(historyNewStatus(entry))}</span></td>
+    <td>${esc(entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema'))}</td>
+    <td>${esc(historySector(entry))}</td>
+    <td>${dateTime(entry.date || f4.updatedAt)}</td>
+  </tr>`).join('');
+
+  return `<section class="card detail-card change-history-panel" id="changeHistoryPanel" ${historyExpanded ? '' : 'hidden'}>
+    <div class="detail-section-heading history-panel-heading">
+      <div><p class="detail-kicker">Rastreabilidade</p><h3>Histórico de alterações</h3><p>Todas as alterações permanecem registradas. A versão aumenta no último número a cada novo evento.</p></div>
+      <span class="history-count">${history.length} registro${history.length === 1 ? '' : 's'}</span>
+    </div>
+    <div class="review-table-wrap history-table-wrap">
+      <table class="review-table change-history-table">
+        <thead><tr><th>Número da versão</th><th>Local / alteração</th><th>Descrição</th><th>Novo status</th><th>Usuário responsável</th><th>Setor</th><th>Data</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7">Nenhuma alteração registrada.</td></tr>'}</tbody>
+      </table>
+    </div>
+  </section>`;
+}
 function money(value, currency = 'EUR', decimals = 2) {
   try {
     return new Intl.NumberFormat('pt-BR', {
@@ -433,7 +564,10 @@ function processTimeline() {
       (step === 'creation' && ['creation', 'supplier'].includes(f4.currentStep));
     const done = !!h && ['Aprovada', 'Concluída', 'Rejeitada'].includes(h.status);
     return `<div class="process-row ${done ? 'done' : ''} ${current ? 'current' : ''}"><span class="process-dot"></span><div><strong>${label}</strong><small>${h?.date ? fmt(h.date) : '—'}${h?.status ? ` · ${h.status}` : ''}</small></div></div>`;
-  }).join('')}${(f4.history || []).filter(h => h.status === 'Devolvida').map(h => `<div class="return-event"><span>↩</span><div><strong>Devolvida para ${esc(h.returnedTo || 'correção')}</strong><small>${fmt(h.date)} · por ${esc(h.by || 'área responsável')}</small></div></div>`).join('')}</div>`;
+  }).join('')}${(() => {
+    const lastReturn = [...(f4.history || [])].reverse().find(h => h.status === 'Devolvida');
+    return lastReturn ? `<div class="return-event"><span>↩</span><div><strong>Devolvida para ${esc(lastReturn.returnedTo || 'correção')}</strong><small>${fmt(lastReturn.date)} · por ${esc(lastReturn.by || 'área responsável')}</small></div></div>` : '';
+  })()}</div>`;
 }
 
 function actionWorkspace() {
@@ -453,22 +587,22 @@ function transition(decision, areas, guidance) {
   const now = new Date().toISOString(), step = profile.id, label = roleConfig[step].title;
   f4.history = f4.history || [];
   if (decision === 'reject') {
-    f4.history.push({ step, label, date: now, status: 'Rejeitada', by: profile.name, guidance, errorAreas: areas });
+    appendHistory({ step, label, date: now, status: 'Rejeitada', newStatus: 'Rejeitada', by: profile.name, sector: historySectorByStep[step], guidance, errorAreas: areas });
     f4.status = 'Rejeitada'; f4.stage = 'Rejeitada'; f4.currentStep = 'rejected'; f4.sector = profile.id === 'cve' ? 'CVE' : profile.role;
   } else if (decision === 'return') {
-    f4.history.push({ step, label, date: now, status: 'Devolvida', by: profile.name, returnedTo: 'Fornecedor', guidance, errorAreas: areas });
+    appendHistory({ step, label, date: now, status: 'Devolvida', newStatus: 'Devolvida', by: profile.name, sector: historySectorByStep[step], returnedTo: 'Fornecedor', guidance, errorAreas: areas });
     f4.status = 'Devolvida'; f4.stage = 'Correção pelo fornecedor'; f4.currentStep = 'supplier'; f4.returnedToProfile = 'supplier'; f4.returnOrigin = profile.id;
     f4.currentAssignee = { profileId: 'supplier', name: f4.supplier, role: 'Fornecedor' };
     f4.responsible = f4.supplier; f4.sector = 'Fornecedor'; f4.currentAssigneeSince = now;
   } else {
-    f4.history.push({ step, label, date: now, status: 'Aprovada', by: profile.name });
+    appendHistory({ step, label, date: now, status: 'Aprovada', newStatus: historyNewStatus({ step, status: 'Aprovada' }), by: profile.name, sector: historySectorByStep[step] });
     const next = {
       commercial: ['technical', 'Em validação técnica', 'Engenharia', { profileId: 'technical', name: 'Mariana Silva', role: 'Engenharia · Validação técnica' }],
       technical: ['manager', 'Em decisão do gerente', 'Gerência do projeto', { profileId: 'manager', name: 'Marcos Oliveira', role: 'Gerente do projeto' }],
       manager: ['cve', 'Em decisão do CVE', 'CVE', { profileId: 'cve', name: 'Analice Mendes', role: 'CVE · Decisão final' }]
     };
     if (step === 'cve') {
-      f4.history.push({ step: 'final', label: 'Aprovada', date: now, status: 'Concluída' });
+      appendHistory({ step: 'final', label: 'Aprovação final', date: now, status: 'Concluída', newStatus: 'Aprovada', by: profile.name, sector: 'CVE' });
       f4.status = 'Aprovada'; f4.stage = 'Aprovada'; f4.currentStep = 'approved';
     } else {
       const [nextStep, status, sector, assignee] = next[step];
@@ -481,6 +615,8 @@ function transition(decision, areas, guidance) {
   saveWorkflowState(f4);
 }
 
+let historyExpanded = false;
+
 function render() {
   if (!f4) {
     content.innerHTML = '<section class="card detail-card"><h3>F4 não encontrada</h3></section>';
@@ -490,8 +626,17 @@ function render() {
     <section class="detail-heading"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div></section>
     <div class="detail-grid">
       <section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">F4</p><h3>Informações da solicitação</h3><p>Resumo operacional e responsável atual.</p></div></div><div class="current-owner-banner"><div class="current-owner-avatar">${esc((f4.currentAssignee?.name || '?').split(' ').map(n => n[0]).slice(0, 2).join(''))}</div><div><span>F4 está com</span><strong>${esc(f4.currentAssignee?.name || f4.responsible)}</strong><small>${esc(f4.currentAssignee?.role || f4.sector)} · ${elapsed(f4.currentAssigneeSince)}</small></div></div><div class="detail-fields"><div class="detail-field"><span>Código F4</span><strong>${getF4Code(f4)}</strong></div><div class="detail-field"><span>Fornecedor</span><strong>${esc(f4.supplier)}</strong></div><div class="detail-field"><span>Projeto</span><strong>${esc(f4.project || '—')}</strong></div><div class="detail-field"><span>Setor atual</span><strong>${esc(f4.sector)}</strong></div><div class="detail-field"><span>Etapa atual</span><strong>${esc(f4.stage)}</strong></div><div class="detail-field"><span>Última atualização</span><strong>${fmt(f4.updatedAt)}</strong></div><div class="detail-field"><span>Prazo</span><strong>${fmt(f4.dueDate)}</strong></div></div></section>
-      <aside class="card detail-card process-card"><div class="detail-section-heading"><div><p class="detail-kicker">Andamento</p><h3>Fluxo da F4</h3></div></div>${processTimeline()}</aside>
+      <aside class="card detail-card process-card"><div class="detail-section-heading"><div><p class="detail-kicker">Andamento</p><h3>Fluxo da F4</h3></div></div>${processTimeline()}
+        <div class="history-access-row process-history-access">
+          <button class="history-access-button" id="historyToggleButton" type="button" aria-expanded="${historyExpanded ? 'true' : 'false'}" aria-controls="changeHistoryPanel">
+            <span class="history-access-icon">↻</span>
+            <span>${historyExpanded ? 'Ocultar histórico de alterações' : 'Ver histórico de alterações'}</span>
+            <span class="history-access-count">${(f4.history || []).length}</span>
+          </button>
+        </div>
+      </aside>
     </div>
+    ${changeHistoryPanel()}
     <div class="complete-review-sticky">
       <section class="complete-review-heading"><div><p class="detail-kicker">Dossiê para validação</p><h3>Informações completas da F4</h3><p>Revise todos os dados registrados antes de aprovar, devolver ou rejeitar a solicitação. Cada seção permite registrar comentários específicos.</p></div><span>10 seções de análise</span></section>
       ${reviewNavigation()}
@@ -592,6 +737,24 @@ function setupSectionNavigation() {
   };
 }
 
+function setupHistoryToggle() {
+  const button = document.querySelector('#historyToggleButton');
+  const panel = document.querySelector('#changeHistoryPanel');
+  if (!button || !panel) return;
+
+  button.onclick = () => {
+    historyExpanded = !historyExpanded;
+    panel.hidden = !historyExpanded;
+    button.setAttribute('aria-expanded', historyExpanded ? 'true' : 'false');
+    const label = button.querySelector('span:nth-child(2)');
+    if (label) label.textContent = historyExpanded ? 'Ocultar histórico de alterações' : 'Ver histórico de alterações';
+    button.classList.toggle('is-open', historyExpanded);
+    if (historyExpanded) {
+      requestAnimationFrame(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  };
+}
+
 function setupComments() {
   document.querySelectorAll('.section-comment-toggle').forEach(button => {
     button.onclick = () => {
@@ -640,6 +803,7 @@ function setupComments() {
 }
 
 function setup() {
+  setupHistoryToggle();
   setupComments();
   setupSectionNavigation();
   const form = document.querySelector('#roleReviewForm');
@@ -664,7 +828,7 @@ function setup() {
   const resubmitButton = document.querySelector('#resubmitButton');
   if (resubmitButton) resubmitButton.onclick = () => {
     const now = new Date().toISOString();
-    f4.history.push({ step: 'commercial', label: 'Validação comercial', date: now, status: 'Em andamento', by: 'Carlos Braatz' });
+    appendHistory({ step: 'commercial', label: 'Reenvio para validação comercial', date: now, status: 'Em andamento', newStatus: 'Em validação comercial', by: profile.name, sector: 'Fornecedor', description: 'F4 corrigida pelo fornecedor e reenviada para nova validação comercial.' });
     f4.status = 'Em validação comercial'; f4.stage = 'Validação comercial'; f4.currentStep = 'commercial'; f4.returnedToProfile = null;
     f4.currentAssignee = { profileId: 'commercial', name: 'Carlos Braatz', role: 'Compras · Validação comercial' };
     f4.responsible = 'Carlos Braatz'; f4.sector = 'Compras'; f4.currentAssigneeSince = now;
@@ -677,4 +841,5 @@ function setup() {
   };
 }
 
+normalizeSupplierSubmissionHistory();
 render();
