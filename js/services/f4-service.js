@@ -36,7 +36,7 @@ export function getByStatus(status) { return getAllF4().filter(item => !status |
 export function getVisibleF4(profile = getActiveProfile()) {
   const all = getAllF4();
   if (profile.permissions?.viewAllF4 || profile.id === 'manager' || profile.id === 'cve') return all;
-  if (profile.id === 'supplier') return all.filter(item => item.currentAssignee?.profileId === 'supplier' || item.owner === profile.name || item.supplier === profile.name || item.assignedProfiles?.length === 0);
+  if (profile.id === 'supplier') return all.filter(item => item.supplier === profile.name);
   return all.filter(item => item.assignedProfiles?.includes(profile.id) || item.currentAssignee?.profileId === profile.id);
 }
 

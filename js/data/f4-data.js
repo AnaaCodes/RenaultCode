@@ -14,6 +14,65 @@ export const F4_DATA = [
     ]
   },
   {
+    id: '0024', supplier: 'Alfa Componentes', orderNumber: 24, year: 2026,
+    title: 'Adequação de embalagem — Peça B', description: 'Rascunho de alteração da embalagem específica da peça.',
+    project: 'HJF — Kardian 2027', status: 'Rascunho', updatedAt: '2026-09-10', dueDate: '2026-09-20',
+    owner: 'Alfa Componentes', responsible: 'Alfa Componentes', sector: 'Fornecedor', stage: 'Criação da F4',
+    currentStep: 'creation', currentAssigneeSince: '2026-09-10T09:10:00',
+    currentAssignee: { profileId: 'supplier', name: 'Alfa Componentes', role: 'Fornecedor' },
+    assignedProfiles: [],
+    history: [
+      { step: 'creation', label: 'Criação', date: '2026-09-10T09:10:00', status: 'Em andamento', by: 'Alfa Componentes' }
+    ]
+  },
+  {
+    id: '0025', supplier: 'Alfa Componentes', orderNumber: 25, year: 2026,
+    title: 'Alteração de referência — Peça C', description: 'Solicitação submetida para início do fluxo de validação Renault.',
+    project: 'X52 — Stepway 2027', status: 'Submetida', updatedAt: '2026-09-10', dueDate: '2026-09-17',
+    owner: 'Alfa Componentes', responsible: 'Carlos Braatz', sector: 'Compras', stage: 'Aguardando validação comercial',
+    currentStep: 'commercial', currentAssigneeSince: '2026-09-10T10:25:00',
+    currentAssignee: { profileId: 'commercial', name: 'Carlos Braatz', role: 'Compras · Validação comercial' },
+    assignedProfiles: ['commercial'],
+    history: [
+      { step: 'creation', label: 'Criação', date: '2026-09-09T15:30:00', status: 'Concluída', by: 'Alfa Componentes' },
+      { step: 'commercial', label: 'Validação comercial', date: '2026-09-10T10:25:00', status: 'Pendente', by: 'Carlos Braatz' }
+    ]
+  },
+  {
+    id: '0026', supplier: 'Alfa Componentes', orderNumber: 26, year: 2026,
+    title: 'Revisão de ferramental — Peça D', description: 'F4 concluída após validações comercial, técnica e decisão final.',
+    project: 'D94 — Oroch 2028', status: 'Aprovada', updatedAt: '2026-09-06', dueDate: '2026-09-06',
+    owner: 'Alfa Componentes', responsible: 'Analice Mendes', sector: 'CVE', stage: 'Aprovada',
+    currentStep: 'approved', currentAssigneeSince: '2026-09-06T16:40:00',
+    currentAssignee: { profileId: 'cve', name: 'Analice Mendes', role: 'CVE · Decisão final' },
+    assignedProfiles: ['commercial', 'technical', 'manager', 'cve'],
+    history: [
+      { step: 'creation', label: 'Criação', date: '2026-08-28T09:00:00', status: 'Concluída', by: 'Alfa Componentes' },
+      { step: 'commercial', label: 'Validação comercial', date: '2026-08-31T11:15:00', status: 'Aprovada', by: 'Carlos Braatz' },
+      { step: 'technical', label: 'Validação técnica', date: '2026-09-02T14:20:00', status: 'Aprovada', by: 'Mariana Silva' },
+      { step: 'manager', label: 'Decisão do gerente de projeto', date: '2026-09-04T10:35:00', status: 'Aprovada', by: 'Marcos Oliveira' },
+      { step: 'cve', label: 'Decisão do CVE', date: '2026-09-06T16:40:00', status: 'Aprovada', by: 'Analice Mendes' },
+      { step: 'final', label: 'Aprovada', date: '2026-09-06T16:40:00', status: 'Concluída' }
+    ]
+  },
+  {
+    id: '0027', supplier: 'Alfa Componentes', orderNumber: 27, year: 2026,
+    title: 'Alteração de processo — Peça E', description: 'F4 encerrada após decisão final desfavorável.',
+    project: 'EVB — Compact EV 2028', status: 'Rejeitada', updatedAt: '2026-09-07', dueDate: '2026-09-07',
+    owner: 'Alfa Componentes', responsible: 'Analice Mendes', sector: 'CVE', stage: 'Rejeitada',
+    currentStep: 'rejected', currentAssigneeSince: '2026-09-07T15:50:00',
+    currentAssignee: { profileId: 'cve', name: 'Analice Mendes', role: 'CVE · Decisão final' },
+    assignedProfiles: ['commercial', 'technical', 'manager', 'cve'],
+    history: [
+      { step: 'creation', label: 'Criação', date: '2026-08-30T08:45:00', status: 'Concluída', by: 'Alfa Componentes' },
+      { step: 'commercial', label: 'Validação comercial', date: '2026-09-01T10:10:00', status: 'Aprovada', by: 'Carlos Braatz' },
+      { step: 'technical', label: 'Validação técnica', date: '2026-09-03T13:25:00', status: 'Aprovada', by: 'Mariana Silva' },
+      { step: 'manager', label: 'Decisão do gerente de projeto', date: '2026-09-05T11:30:00', status: 'Aprovada', by: 'Marcos Oliveira' },
+      { step: 'cve', label: 'Decisão do CVE', date: '2026-09-07T15:50:00', status: 'Rejeitada', by: 'Analice Mendes', guidance: 'Solicitação não aprovada nas condições apresentadas.' },
+      { step: 'final', label: 'Cancelada', date: '2026-09-07T15:50:00', status: 'Concluída' }
+    ]
+  },
+  {
     id: '0028', supplier: 'Beta Industrial', orderNumber: 28, year: 2026,
     title: 'Revisão contratual — Fornecedor B', description: 'Revisão de condição comercial e prazo contratual.',
     project: 'X52 — Stepway 2027', status: 'Em validação comercial', updatedAt: '2026-09-09', dueDate: '2026-09-14',
