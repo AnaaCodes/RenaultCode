@@ -1109,11 +1109,6 @@ const SECTION_EDIT_FIELDS = {
     ['request.multidisciplinary','F4 multidisciplinar','text'], ['request.lupNumber','Número LUP','text'], ['request.setPayment','Modo de pagamento SET','text'],
     ['request.customerQualityLup','LUP de qualidade do cliente (QC)','text']
   ],
-  fornecedor: [
-    ['supplier.manager','Supplier F4 Manager','text'], ['supplier.plant','Supplier Plant','text'], ['supplier.position','Position','text'],
-    ['supplier.alcor','Supplier Account (ALCOR)','text'], ['supplier.setAccount','Supplier Account for SET Order','text'], ['supplier.leadTime','Implementation Leadtime','text'],
-    ['supplier.diversity','Diversidade','text']
-  ],
   impactos: [
     ['impact.currency','Moeda da oferta','text'], ['impact.units','Unidade','text'], ['impact.technicalValues.0.value','Impacto técnico principal','number'],
     ['impact.toolingAmount','Valor de ferramental','number'], ['impact.setAmount','Valor SET','number'], ['impact.massProductionAmount','PDS Mass Production','number'],
@@ -1754,7 +1749,7 @@ function render() {
     <div class="complete-review-stack">${fullReviewSections()}</div>
     <div class="review-information-grid">${approvalPanel()}${guidancePanel()}</div>
     ${actionWorkspace()}
-    ${profile.id === 'supplier' ? `<section class="supplier-readonly-note"><strong>Validações Renault</strong><span>${canEditContent() ? 'Esta F4 foi devolvida. Use o lápis em cada seção para editar somente os dados necessários; ao reenviar, a edição será bloqueada novamente.' : 'O fornecedor acompanha as decisões e orientações, mas a edição só é liberada quando a F4 é devolvida para correção.'}</span></section>` : ''}`;
+    ${profile.id === 'supplier' ? `<section class="supplier-readonly-note"><strong>Validações Renault</strong><span>${canEditContent() ? 'Esta F4 foi devolvida. Use o lápis nas seções liberadas para editar somente os dados necessários. As informações do fornecedor permanecem somente para consulta e não podem ser alteradas; ao reenviar, toda edição será bloqueada novamente.' : 'O fornecedor acompanha as decisões e orientações. A edição só é liberada quando a F4 é devolvida para correção, e as informações do fornecedor permanecem sempre somente para consulta.'}</span></section>` : ''}`;
   setup();
 }
 
