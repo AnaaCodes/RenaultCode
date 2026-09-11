@@ -163,3 +163,22 @@
   .flow-card { padding: 18px; }
 }
 .team-status-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.team-status-card{min-height:118px}.team-status-card .attention-content{display:grid;gap:7px}.team-status-card .attention-content strong{font:600 28px "Sora",sans-serif}.team-status-card .attention-content p{margin:0}@media(max-width:1200px){.team-status-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:700px){.team-status-grid{grid-template-columns:1fr}}
+
+
+/* Responsividade refinada da visão geral */
+@media (max-width: 1180px) {
+  .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .attention-grid.supplier-attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .welcome-block h2 { font-size: clamp(24px, 7vw, 31px); }
+  .quick-actions,
+  .attention-grid,
+  .attention-grid.supplier-attention-grid { grid-template-columns: 1fr; }
+  .quick-card { min-height: 78px; padding: 15px 16px; }
+  .attention-card { min-height: 132px; padding: 16px; }
+  .table-card-header { padding: 16px; }
+  .work-queue-card { overflow-x: auto; }
+  .work-queue-table { min-width: 820px; }
+}

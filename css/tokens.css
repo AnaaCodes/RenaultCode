@@ -2,7 +2,8 @@
   --sidebar-width: 220px;
   --sidebar-collapsed-width: 78px;
   --topbar-height: 80px;
-  --content-max: 1280px;
+  --content-max: 1440px;
+  --content-wide-max: 1520px;
 
   --purple: #4f16b8;
   --purple-dark: #3e0e9a;

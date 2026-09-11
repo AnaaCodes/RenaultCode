@@ -735,3 +735,16 @@
     display: none;
   }
 }
+
+
+/* Perfil: melhor uso do espaço em resoluções intermediárias */
+.profile-container { width: min(100%, 1380px); }
+@media (max-width: 900px) {
+  .profile-hero { padding: 22px; gap: 18px; }
+  .profile-main-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .profile-hero { padding: 18px; border-radius: 13px; }
+  .profile-card,
+  .profile-settings-card { padding-right: 17px; padding-left: 17px; }
+}

@@ -1403,3 +1403,53 @@
     display: none;
   }
 }
+
+
+/* =========================================================
+   RESPONSIVIDADE GLOBAL — respiro lateral e distribuição
+   ========================================================= */
+.main-content {
+  --page-gutter: clamp(24px, 2.4vw, 44px);
+  padding-right: var(--page-gutter);
+  padding-left: var(--page-gutter);
+}
+
+.page-container {
+  width: min(100%, var(--content-max));
+  min-width: 0;
+}
+
+/* Evita que filhos de grid/flex forcem a página para fora da viewport. */
+.workspace,
+.main-content,
+.page-container,
+.page-container > *,
+main section,
+main article {
+  min-width: 0;
+}
+
+/* Rolagem horizontal fica restrita à tabela/componente que precisa dela. */
+.table-wrap,
+.table-scroll,
+.flow-table-wrap,
+.priority-table-wrap,
+.sector-table-wrap,
+.history-table-wrap,
+.activity-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1200px) {
+  .main-content { --page-gutter: 24px; }
+}
+
+@media (max-width: 760px) {
+  .main-content { --page-gutter: 18px; }
+}
+
+@media (max-width: 420px) {
+  .main-content { --page-gutter: 14px; }
+}

@@ -3,8 +3,8 @@
    ========================================================= */
 
 .activity-page {
-  padding-right: 0;
-  padding-left: 0;
+  padding-right: var(--page-gutter);
+  padding-left: var(--page-gutter);
 }
 
 .activity-container {
@@ -406,4 +406,19 @@
   .activity-page { padding-right: 16px; padding-left: 16px; }
   .activity-heading h2 { font-size: 28px; }
   .activity-heading p.activity-description { font-size: 14px; }
+}
+
+
+/* Responsividade consistente das páginas de atividade */
+.activity-container { width: min(100%, var(--content-wide-max, 1520px)); }
+@media (max-width: 900px) {
+  .activity-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .activity-heading h2 { font-size: clamp(27px, 6vw, 35px); }
+  .activity-heading p.activity-description { font-size: 14px; }
+}
+@media (max-width: 560px) {
+  .activity-panel-header,
+  .activity-list-header { padding-right: 16px; padding-left: 16px; }
+  .activity-summary-card { min-height: 110px; padding: 16px; }
+  .activity-toolbar { padding-right: 16px; padding-left: 16px; }
 }
