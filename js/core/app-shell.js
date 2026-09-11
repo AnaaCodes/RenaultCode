@@ -2,6 +2,7 @@ import { renderSidebar } from '../components/sidebar.js';
 import { renderHeader } from '../components/header.js';
 import { showToast } from './toast.js';
 import { getActiveProfile, hasPermission, setActiveProfile } from './user-session.js';
+import { applyDocumentLanguage } from './i18n.js';
 
 function redirectForProfile(profile) {
   window.location.href = profile.homePage || './index.html';
@@ -71,6 +72,7 @@ function applyRolePermissions() {
 }
 
 export function mountAppShell({ activePage, title }) {
+  applyDocumentLanguage();
   if (activePage === 'nova-f4' && !hasPermission('createF4')) {
     window.location.replace('./index.html');
     return false;

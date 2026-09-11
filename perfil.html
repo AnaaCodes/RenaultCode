@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Perfil, informações corporativas e configurações do usuário F4">
+  <title>Meu perfil | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/perfil.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content profile-page">
+        <div class="page-container profile-container">
+          <section class="profile-hero" id="profileHero" aria-labelledby="profileName"></section>
+
+          <div class="profile-layout">
+            <div class="profile-main-column">
+              <section class="profile-panel" aria-labelledby="personalTitle">
+                <div class="profile-panel-heading">
+                  <div>
+                    <p class="profile-kicker" id="personalKicker"></p>
+                    <h2 id="personalTitle"></h2>
+                  </div>
+                  <button class="profile-secondary-button" id="editContactButton" type="button"></button>
+                </div>
+                <div class="profile-info-grid" id="personalInfo"></div>
+                <form class="profile-edit-form" id="contactForm" hidden>
+                  <div class="profile-form-grid">
+                    <label><span id="emailEditLabel"></span><input id="emailInput" type="email" autocomplete="email"></label>
+                    <label><span id="phoneEditLabel"></span><input id="phoneInput" type="tel" autocomplete="tel"></label>
+                    <label><span id="cityEditLabel"></span><input id="cityInput" type="text" autocomplete="address-level2"></label>
+                  </div>
+                  <div class="profile-form-actions">
+                    <button class="profile-secondary-button" id="cancelContactButton" type="button"></button>
+                    <button class="profile-primary-button" type="submit" id="saveContactButton"></button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="profile-panel" aria-labelledby="corporateTitle">
+                <div class="profile-panel-heading">
+                  <div><p class="profile-kicker" id="corporateKicker"></p><h2 id="corporateTitle"></h2></div>
+                  <span class="profile-sync-badge" id="corporateSync"></span>
+                </div>
+                <div class="profile-info-grid corporate-grid" id="corporateInfo"></div>
+              </section>
+
+              <section class="profile-panel" aria-labelledby="accessTitle">
+                <div class="profile-panel-heading"><div><p class="profile-kicker" id="accessKicker"></p><h2 id="accessTitle"></h2></div></div>
+                <div class="permission-list" id="permissionList"></div>
+              </section>
+            </div>
+
+            <aside class="profile-settings-column" id="configuracoes">
+              <section class="language-panel" aria-labelledby="languageTitle">
+                <div class="language-panel-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-3.1a15.7 15.7 0 0 0-1.3-3.3A8.1 8.1 0 0 1 18.9 8ZM12 4c.8 1 1.5 2.3 1.9 4h-3.8c.4-1.7 1.1-3 1.9-4ZM9.5 4.7A15.7 15.7 0 0 0 8.2 8H5.1a8.1 8.1 0 0 1 4.4-3.3ZM4.3 10h3.6a16.7 16.7 0 0 0 0 4H4.3a8 8 0 0 1 0-4Zm.8 6h3.1a15.7 15.7 0 0 0 1.3 3.3A8.1 8.1 0 0 1 5.1 16Zm6.9 4c-.8-1-1.5-2.3-1.9-4h3.8c-.4 1.7-1.1 3-1.9 4Zm2.3-6H9.7a14.4 14.4 0 0 1 0-4h4.6a14.4 14.4 0 0 1 0 4Zm.2 5.3a15.7 15.7 0 0 0 1.3-3.3h3.1a8.1 8.1 0 0 1-4.4 3.3ZM16.1 14a16.7 16.7 0 0 0 0-4h3.6a8 8 0 0 1 0 4h-3.6Z"/></svg>
+                </div>
+                <p class="profile-kicker light" id="languageKicker"></p>
+                <h2 id="languageTitle"></h2>
+                <p class="language-description" id="languageDescription"></p>
+                <div class="language-options" id="languageOptions"></div>
+              </section>
+
+              <section class="profile-panel settings-panel" aria-labelledby="settingsTitle">
+                <div class="profile-panel-heading"><div><p class="profile-kicker" id="settingsKicker"></p><h2 id="settingsTitle"></h2></div></div>
+                <div class="settings-list" id="settingsList"></div>
+              </section>
+
+              <section class="profile-panel security-panel" aria-labelledby="securityTitle">
+                <div class="profile-panel-heading"><div><p class="profile-kicker" id="securityKicker"></p><h2 id="securityTitle"></h2></div></div>
+                <div class="security-list" id="securityList"></div>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/perfil.js"></script>
+</body>
+</html>

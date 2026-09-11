@@ -1,4 +1,5 @@
 import { getActiveProfile, getOtherProfiles } from '../core/user-session.js';
+import { t } from '../core/i18n.js';
 
 function avatarMarkup(profile, className = 'profile-avatar') {
   if (profile.avatar) {
@@ -16,7 +17,7 @@ export function renderHeader(title) {
   mount.innerHTML = `
     <header class="topbar">
       <div class="topbar-left">
-        <button class="menu-button" id="menuButton" type="button" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">
+        <button class="menu-button" id="menuButton" type="button" aria-label="${t('header.openMenu', 'Abrir menu')}" aria-controls="sidebar" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/></svg>
         </button>
         <div class="title-lockup">
@@ -26,17 +27,21 @@ export function renderHeader(title) {
       </div>
 
       <div class="profile-switcher" id="profileSwitcher">
-        <button class="profile" id="profileButton" type="button" aria-label="Trocar perfil" aria-haspopup="menu" aria-expanded="false" aria-controls="profileMenu">
-          <div class="profile-text">
-            <span class="profile-name">${current.name}</span>
-            <span class="profile-role">${current.role}</span>
-          </div>
-          ${avatarMarkup(current)}
-          <svg class="profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z"/></svg>
-        </button>
+        <div class="profile">
+          <a class="profile-view-link" href="./perfil.html" aria-label="${t('header.profile', 'Abrir meu perfil')}" title="${t('header.profile', 'Abrir meu perfil')}">
+            <div class="profile-text">
+              <span class="profile-name">${current.name}</span>
+              <span class="profile-role">${current.role}</span>
+            </div>
+            ${avatarMarkup(current)}
+          </a>
+          <button class="profile-menu-trigger" id="profileButton" type="button" aria-label="${t('header.switchProfileMenu', 'Abrir troca de perfil')}" aria-haspopup="menu" aria-expanded="false" aria-controls="profileMenu">
+            <svg class="profile-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5H7Z"/></svg>
+          </button>
+        </div>
 
-        <div class="profile-menu" id="profileMenu" role="menu" aria-label="Trocar perfil" hidden>
-          <p class="profile-menu-label">Trocar perfil</p>
+        <div class="profile-menu" id="profileMenu" role="menu" aria-label="${t('header.switchProfile', 'Trocar perfil')}" hidden>
+          <p class="profile-menu-label">${t('header.switchProfile', 'Trocar perfil')}</p>
           ${alternatives.map(profile => `
             <button class="profile-menu-option" type="button" role="menuitem" data-profile-id="${profile.id}">
               <span class="profile-menu-avatar">${avatarMarkup(profile, 'profile-avatar')}</span>

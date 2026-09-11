@@ -9,6 +9,23 @@ export const USER_PROFILES = {
     avatar: './assets/images/alfa-componentes.svg',
     initials: 'AC',
     homePage: './index.html',
+    contact: {
+      fullName: 'Alfa Componentes',
+      email: 'contato@alfacomponentes.com.br',
+      phone: 'Não informado',
+      city: 'Brasil',
+      country: 'Brasil',
+      timezone: 'America/Sao_Paulo'
+    },
+    corporate: {
+      company: 'Alfa Componentes',
+      department: 'Conta fornecedor',
+      position: 'Fornecedor',
+      unit: 'Brasil',
+      accessProfile: 'Fornecedor externo',
+      account: 'ALCOR-ALF',
+      scope: 'F4s vinculadas à Alfa Componentes'
+    },
     permissions: {
       createF4: true,
       viewProjects: false,
@@ -28,6 +45,23 @@ export const USER_PROFILES = {
     avatar: null,
     initials: 'MO',
     homePage: './index.html',
+    contact: {
+      fullName: 'Marcos Oliveira',
+      email: 'marcos.oliveira@renault.com.br',
+      phone: 'Não informado',
+      city: 'Brasil',
+      country: 'Brasil',
+      timezone: 'America/Sao_Paulo'
+    },
+    corporate: {
+      company: 'Renault Geely do Brasil',
+      department: 'Gerência de Projeto',
+      position: 'Gerente do projeto',
+      unit: 'Brasil',
+      accessProfile: 'Gerente de Projeto',
+      account: 'MOLIVEIRA',
+      scope: 'Projetos e F4s vinculadas aos projetos sob sua responsabilidade'
+    },
     permissions: {
       createF4: false,
       viewProjects: true,
@@ -47,6 +81,23 @@ export const USER_PROFILES = {
     avatar: null,
     initials: 'CB',
     homePage: './index.html',
+    contact: {
+      fullName: 'Carlos Braatz',
+      email: 'carlos.braatz@renault.com.br',
+      phone: 'Não informado',
+      city: 'Brasil',
+      country: 'Brasil',
+      timezone: 'America/Sao_Paulo'
+    },
+    corporate: {
+      company: 'Renault Geely do Brasil',
+      department: 'Equipe de Compras',
+      position: 'Validação comercial',
+      unit: 'Brasil',
+      accessProfile: 'Validador Comercial',
+      account: 'CBRAATZ',
+      scope: 'F4s em validação comercial e processos sob responsabilidade de Compras'
+    },
     permissions: {
       createF4: false,
       viewProjects: false,
@@ -66,6 +117,23 @@ export const USER_PROFILES = {
     avatar: null,
     initials: 'MS',
     homePage: './index.html',
+    contact: {
+      fullName: 'Mariana Silva',
+      email: 'mariana.silva@renault.com.br',
+      phone: 'Não informado',
+      city: 'Brasil',
+      country: 'Brasil',
+      timezone: 'America/Sao_Paulo'
+    },
+    corporate: {
+      company: 'Renault Geely do Brasil',
+      department: 'Equipe de Engenharia',
+      position: 'Validação técnica',
+      unit: 'Brasil',
+      accessProfile: 'Validador Técnico',
+      account: 'MSILVA',
+      scope: 'F4s em validação técnica e processos sob responsabilidade da Engenharia'
+    },
     permissions: {
       createF4: false,
       viewProjects: false,
@@ -85,6 +153,23 @@ export const USER_PROFILES = {
     avatar: './assets/images/profile.jpg',
     initials: 'AM',
     homePage: './index.html',
+    contact: {
+      fullName: 'Analice Mendes',
+      email: 'analice.mendes@renault.com.br',
+      phone: 'Não informado',
+      city: 'Brasil',
+      country: 'Brasil',
+      timezone: 'America/Sao_Paulo'
+    },
+    corporate: {
+      company: 'Renault Geely do Brasil',
+      department: 'CVE',
+      position: 'CVE',
+      unit: 'Brasil',
+      accessProfile: 'CVE',
+      account: 'AMENDES',
+      scope: 'Visão global das F4s, projetos e decisão final do fluxo CVE'
+    },
     permissions: {
       createF4: false,
       viewProjects: true,
