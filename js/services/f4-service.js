@@ -10,7 +10,10 @@ export function generateF4Code(supplier, orderNumber, year = 2026) {
 }
 export function getF4Code(f4) { return generateF4Code(f4?.supplier, f4?.orderNumber, f4?.year); }
 
-function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function clone(value) {
+  if (value === undefined) return undefined;
+  return JSON.parse(JSON.stringify(value));
+}
 function stateKey(id) { return `${STATE_PREFIX}${id}`; }
 
 export function getWorkflowState(f4) {
@@ -25,7 +28,11 @@ export function saveWorkflowState(f4) {
   const base = F4_DATA.find(item => String(item.id) === String(f4.id));
   if (!base) return;
   const fields = ['status','updatedAt','responsible','sector','stage','currentStep','returnedToProfile','returnOrigin','currentAssigneeSince','currentAssignee','assignedProfiles','history'];
-  const payload = Object.fromEntries(fields.map(key => [key, clone(f4[key])]).filter(([,value]) => value !== undefined));
+  const payload = Object.fromEntries(
+    fields
+      .filter(key => f4[key] !== undefined)
+      .map(key => [key, clone(f4[key])])
+  );
   localStorage.setItem(stateKey(f4.id), JSON.stringify(payload));
 }
 
