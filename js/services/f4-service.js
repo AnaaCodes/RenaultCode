@@ -2,6 +2,7 @@ import { F4_DATA } from '../data/f4-data.js';
 import { getActiveProfile } from '../core/user-session.js';
 
 const STATE_PREFIX = 'f4-workflow-state-';
+const CREATED_ITEMS_KEY = 'f4-created-items-v1';
 
 export function generateF4Code(supplier, orderNumber, year = 2026) {
   const normalized = String(supplier || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z]/g, '');
@@ -16,6 +17,42 @@ function clone(value) {
 }
 function stateKey(id) { return `${STATE_PREFIX}${id}`; }
 
+function getCreatedItems() {
+  try {
+    const items = JSON.parse(localStorage.getItem(CREATED_ITEMS_KEY) || '[]');
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCreatedItems(items) {
+  localStorage.setItem(CREATED_ITEMS_KEY, JSON.stringify(items));
+}
+
+function getBaseF4ById(id) {
+  return [...F4_DATA, ...getCreatedItems()].find(item => String(item.id) === String(id));
+}
+
+export function createF4(record) {
+  if (!record?.id) throw new Error('A nova F4 precisa possuir um ID.');
+  const items = getCreatedItems();
+  const existingIndex = items.findIndex(item => String(item.id) === String(record.id));
+  const payload = clone(record);
+  if (existingIndex >= 0) items[existingIndex] = payload;
+  else items.push(payload);
+  saveCreatedItems(items);
+  localStorage.removeItem(stateKey(record.id));
+  return clone(payload);
+}
+
+export function getNextF4OrderNumber() {
+  const values = [...F4_DATA, ...getCreatedItems()]
+    .map(item => Number(item.orderNumber))
+    .filter(Number.isFinite);
+  return (values.length ? Math.max(...values) : 0) + 1;
+}
+
 export function getWorkflowState(f4) {
   if (!f4) return null;
   try {
@@ -25,9 +62,14 @@ export function getWorkflowState(f4) {
 }
 
 export function saveWorkflowState(f4) {
-  const base = F4_DATA.find(item => String(item.id) === String(f4.id));
+  const base = getBaseF4ById(f4.id);
   if (!base) return;
-  const fields = ['status','updatedAt','responsible','sector','stage','currentStep','returnedToProfile','returnOrigin','currentAssigneeSince','currentAssignee','assignedProfiles','history'];
+  const fields = [
+    'title','description','project','status','updatedAt','responsible','sector','stage','currentStep',
+    'returnedToProfile','returnOrigin','currentAssigneeSince','currentAssignee','assignedProfiles','history',
+    'currentVersion','finalVersion','versioningSchema','versionSnapshots','validationCycle','activeSignatures',
+    'signatureAudit','finalSignatures','finalApprovedAt','rejectedVersion','contentOverrides'
+  ];
   const payload = Object.fromEntries(
     fields
       .filter(key => f4[key] !== undefined)
@@ -36,8 +78,12 @@ export function saveWorkflowState(f4) {
   localStorage.setItem(stateKey(f4.id), JSON.stringify(payload));
 }
 
-export function getAllF4() { return F4_DATA.map(getWorkflowState); }
-export function getF4ById(id) { const base = F4_DATA.find(item => String(item.id) === String(id)); return getWorkflowState(base); }
+export function getAllF4() {
+  const created = getCreatedItems();
+  const createdIds = new Set(created.map(item => String(item.id)));
+  return [...F4_DATA.filter(item => !createdIds.has(String(item.id))), ...created].map(getWorkflowState);
+}
+export function getF4ById(id) { return getWorkflowState(getBaseF4ById(id)); }
 export function getByStatus(status) { return getAllF4().filter(item => !status || status === 'Todos' || item.status === status); }
 
 export function getVisibleF4(profile = getActiveProfile()) {

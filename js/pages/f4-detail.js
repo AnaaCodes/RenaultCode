@@ -53,7 +53,7 @@ function elapsed(since) {
 }
 function latest(step) { return [...(f4.history || [])].reverse().find(h => h.step === step); }
 function approvalStatus(step) {
-  const h = latest(step);
+  const h = latestInCurrentCycle(step);
   if (!h) return 'Pendente';
   if (['Aprovada', 'Concluída'].includes(h.status)) return 'Aprovado';
   if (h.status === 'Rejeitada') return 'Rejeitado';
@@ -71,23 +71,73 @@ const historySectorByStep = {
   final: 'Sistema'
 };
 
-function fallbackHistoryVersion(index) {
-  return `1.0.${index}`;
+function normalizeVersion(version = '1.0.0') {
+  const match = String(version).match(/^(\d+)\.([0-9])\.([0-9])$/);
+  return match ? `${Number(match[1])}.${match[2]}.${match[3]}` : '1.0.0';
 }
 
-function nextHistoryVersion() {
-  const history = f4?.history || [];
-  if (!history.length) return '1.0.0';
-  const lastIndex = history.length - 1;
-  const current = String(history[lastIndex]?.version || fallbackHistoryVersion(lastIndex));
-  const match = current.match(/^(\d+)\.(\d+)\.(\d+)$/);
-  if (!match) return fallbackHistoryVersion(history.length);
-  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+function incrementVersion(version = '1.0.0') {
+  const [majorRaw, minorRaw, patchRaw] = normalizeVersion(version).split('.').map(Number);
+  let major = majorRaw;
+  let minor = minorRaw;
+  let patch = patchRaw + 1;
+  if (patch > 9) { patch = 0; minor += 1; }
+  if (minor > 9) { minor = 0; major += 1; }
+  return `${major}.${minor}.${patch}`;
+}
+
+function currentVersion() {
+  return normalizeVersion(f4?.currentVersion || '1.0.0');
 }
 
 function appendHistory(entry) {
   f4.history = f4.history || [];
-  f4.history.push({ ...entry, version: entry.version || nextHistoryVersion() });
+  f4.history.push({
+    ...entry,
+    version: normalizeVersion(entry.version || currentVersion()),
+    validationCycle: entry.validationCycle || f4.validationCycle || 1
+  });
+}
+
+function latestInCurrentCycle(step) {
+  const cycle = f4?.validationCycle || 1;
+  return [...(f4?.history || [])].reverse().find(h => h.step === step && (h.validationCycle || 1) === cycle);
+}
+
+function signatureFor(decision, step, date, reason = '') {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    decision,
+    step,
+    title: decision === 'approve' ? 'F4 aprovada por' : 'F4 rejeitada por',
+    name: profile.name,
+    sector: historySectorByStep[step] || profile.role,
+    date,
+    version: currentVersion(),
+    validationCycle: f4.validationCycle || 1,
+    reason: reason || ''
+  };
+}
+
+function registerSignature(signature, { active = false } = {}) {
+  f4.signatureAudit = Array.isArray(f4.signatureAudit) ? f4.signatureAudit : [];
+  f4.signatureAudit.push(signature);
+  if (!active) return;
+  f4.activeSignatures = Array.isArray(f4.activeSignatures) ? f4.activeSignatures : [];
+  f4.activeSignatures = f4.activeSignatures.filter(item => item.step !== signature.step);
+  f4.activeSignatures.push(signature);
+}
+
+function invalidateCurrentApprovals(reason) {
+  const active = Array.isArray(f4.activeSignatures) ? f4.activeSignatures : [];
+  if (active.length) {
+    const ids = new Set(active.map(item => item.id));
+    f4.signatureAudit = (f4.signatureAudit || []).map(item => ids.has(item.id)
+      ? { ...item, valid: false, invalidatedAt: new Date().toISOString(), invalidationReason: reason }
+      : item);
+  }
+  f4.activeSignatures = [];
+  f4.validationCycle = (f4.validationCycle || 1) + 1;
 }
 
 function normalizeSupplierSubmissionHistory() {
@@ -163,10 +213,7 @@ function historyNewStatus(entry) {
 }
 
 function changeHistoryPanel() {
-  const history = (f4.history || []).map((entry, index) => ({
-    ...entry,
-    version: entry.version || fallbackHistoryVersion(index)
-  })).reverse();
+  const history = (f4.history || []).map(entry => ({ ...entry, version: normalizeVersion(entry.version || currentVersion()) })).reverse();
 
   const rows = history.map(entry => `<tr>
     <td><strong class="history-version">${esc(entry.version)}</strong></td>
@@ -176,17 +223,18 @@ function changeHistoryPanel() {
     <td>${esc(entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema'))}</td>
     <td>${esc(historySector(entry))}</td>
     <td>${dateTime(entry.date || f4.updatedAt)}</td>
+    <td>${(entry.step === 'creation' || entry.contentChange === true || entry.step === 'final') && f4.versionSnapshots?.[entry.version]?.markdown ? `<button class="history-download-button" type="button" data-download-version="${esc(entry.version)}">Baixar .md</button>` : '<span class="history-file-empty">—</span>'}</td>
   </tr>`).join('');
 
   return `<section class="card detail-card change-history-panel" id="changeHistoryPanel" ${historyExpanded ? '' : 'hidden'}>
     <div class="detail-section-heading history-panel-heading">
-      <div><p class="detail-kicker">Rastreabilidade</p><h3>Histórico de alterações</h3><p>Todas as alterações permanecem registradas. A versão aumenta no último número a cada novo evento.</p></div>
+      <div><p class="detail-kicker">Rastreabilidade</p><h3>Histórico de alterações</h3><p>Todas as ações permanecem registradas, mas a versão só muda quando o conteúdo da F4 é alterado ou quando o CVE gera a versão final.</p></div>
       <span class="history-count">${history.length} registro${history.length === 1 ? '' : 's'}</span>
     </div>
     <div class="review-table-wrap history-table-wrap">
       <table class="review-table change-history-table">
-        <thead><tr><th>Número da versão</th><th>Local / alteração</th><th>Descrição</th><th>Novo status</th><th>Usuário responsável</th><th>Setor</th><th>Data</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="7">Nenhuma alteração registrada.</td></tr>'}</tbody>
+        <thead><tr><th>Número da versão</th><th>Local / alteração</th><th>Descrição</th><th>Novo status</th><th>Usuário responsável</th><th>Setor</th><th>Data</th><th>Arquivo</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8">Nenhuma alteração registrada.</td></tr>'}</tbody>
       </table>
     </div>
   </section>`;
@@ -202,6 +250,57 @@ function money(value, currency = 'EUR', decimals = 2) {
 }
 function percent(value) {
   return `${number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}
+
+function deepMerge(base, override) {
+  if (!override || typeof override !== 'object') return base;
+  if (Array.isArray(override)) return override.map(item => typeof item === 'object' && item !== null ? deepMerge({}, item) : item);
+  const result = { ...(base || {}) };
+  Object.entries(override).forEach(([key, value]) => {
+    if (value === undefined) return;
+    if (value && typeof value === 'object' && !Array.isArray(value)) result[key] = deepMerge(result[key] || {}, value);
+    else result[key] = value;
+  });
+  return result;
+}
+
+function recalculateReviewData(data) {
+  const technical = Array.isArray(data.impact?.technicalValues)
+    ? data.impact.technicalValues.find(item => item.currency === data.impact.currency)?.value || data.impact.technicalValues[0]?.value || 0
+    : 0;
+  const unitImpact = number(technical) + (data.impact?.massProductionImpact === 'Sim' ? number(data.impact.massProductionAmount) : 0) + (data.impact?.aftersalesImpact === 'Sim' ? number(data.impact.aftersalesAmount) : 0);
+  const annualVolume = number(data.impact?.annualVolume);
+  const initialCosts = (data.impact?.toolingImpact === 'Sim' ? number(data.impact.toolingAmount) : 0)
+    + (data.impact?.setImpact === 'Sim' ? number(data.impact.setAmount) : 0)
+    + (data.impact?.packagingImpact === 'Sim' ? number(data.impact.packagingAmount) : 0);
+  data.impact.unitImpact = unitImpact;
+  data.impact.annualImpact = unitImpact * annualVolume;
+  data.impact.initialCosts = initialCosts;
+
+  if (data.partPrice) {
+    data.partPrice.total = number(data.partPrice.material) + number(data.partPrice.direct) + number(data.partPrice.indirect) + number(data.partPrice.general) + number(data.partPrice.packaging);
+    data.partPrice.declared = number(technical);
+    data.partPrice.difference = data.partPrice.total - data.partPrice.declared;
+  }
+  if (data.tooling) data.tooling.amount = number(data.impact?.toolingAmount);
+  if (data.set) {
+    data.set.calculated = (data.set.rows || []).reduce((sum, row) => sum + number(row?.[2]) * number(row?.[3]), 0);
+    data.set.declared = number(data.impact?.setAmount);
+    data.set.difference = data.set.calculated - data.set.declared;
+  }
+  if (data.capacity) {
+    data.capacity.delta = number(data.capacity.next) - number(data.capacity.previous);
+    data.capacity.percent = number(data.capacity.previous) ? data.capacity.delta / number(data.capacity.previous) * 100 : 0;
+  }
+  if (data.doa) {
+    data.doa.initialCosts = initialCosts;
+    data.doa.annualImpact = data.impact.annualImpact;
+    data.doa.initialDoa = initialCosts < 50000 ? 'Comprador' : initialCosts < 200000 ? 'PPM / RSAM' : initialCosts < 500000 ? 'GPPM / DIR-Tech' : initialCosts < 5000000 ? 'VP' : 'CPO';
+    data.doa.annualDoa = data.impact.annualImpact < 50000 ? 'Comprador' : data.impact.annualImpact < 200000 ? 'PPM / RSAM' : data.impact.annualImpact < 500000 ? 'GPPM / DIR-Tech' : data.impact.annualImpact < 1000000 ? 'VP' : 'CPO';
+  }
+  if (data.supplier) data.supplier.version = currentVersion();
+  if (data.metadata) data.metadata.version = currentVersion();
+  return data;
 }
 
 function getReviewData(item) {
@@ -257,7 +356,7 @@ function getReviewData(item) {
   const initialDoa = initialCosts < 50000 ? 'Comprador' : initialCosts < 200000 ? 'PPM / RSAM' : initialCosts < 500000 ? 'GPPM / DIR-Tech' : initialCosts < 5000000 ? 'VP' : 'CPO';
   const annualDoa = annualImpact < 50000 ? 'Comprador' : annualImpact < 200000 ? 'PPM / RSAM' : annualImpact < 500000 ? 'GPPM / DIR-Tech' : annualImpact < 1000000 ? 'VP' : 'CPO';
 
-  return {
+  const baseData = {
     request: {
       title: item.title,
       description: item.description,
@@ -345,6 +444,334 @@ function getReviewData(item) {
       attachmentCount: 4, currentResponsible: item.currentAssignee?.name || item.responsible
     }
   };
+  return recalculateReviewData(deepMerge(baseData, item.contentOverrides || {}));
+}
+
+
+function markdownValue(value) {
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value ?? '—').replaceAll('|', '\\|').replaceAll('\n', '<br>');
+}
+
+function markdownFields(entries) {
+  return ['| Campo | Valor |', '|---|---|', ...entries.map(([label, value]) => `| ${markdownValue(label)} | ${markdownValue(value)} |`)].join('\n');
+}
+
+function buildVersionMarkdown(item, version, { final = false } = {}) {
+  const d = getReviewData(item);
+  const technicalValues = (d.impact.technicalValues || []).map(v => `${v.currency} ${number(v.value).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`).join(' / ') || '—';
+  const setRows = (d.set.rows || []).map(row => `| ${markdownValue(row[0])} | ${markdownValue(row[1])} | ${markdownValue(row[2])} | ${markdownValue(row[3])} | ${markdownValue(number(row[2]) * number(row[3]))} |`);
+  const refs = (d.references || []).map(ref => `| ${markdownValue(ref.current)} | ${markdownValue(ref.newRef)} | ${markdownValue(ref.lastPrice)} | ${markdownValue(ref.partImpact)} | ${markdownValue(ref.tokenImpact)} | ${markdownValue(ref.notes)} |`);
+  return [
+    `# F4 ${getF4Code(item)} - ${d.request.title}`,
+    '', `**Versão:** ${version}${final ? ' - FINAL' : ''}  `, `**Status:** ${item.status}  `, `**Fornecedor:** ${item.supplier}  `, `**Projeto:** ${item.project || '—'}  `, `**Gerado em:** ${new Date().toLocaleString('pt-BR')}`,
+    '', '## Solicitação', '', markdownFields([
+      ['Título', d.request.title], ['Descrição', d.request.description], ['Causa da modificação', d.request.changeCause], ['Veículos / órgãos', d.request.vehicles],
+      ['Origem da modificação', d.request.changeOrigin], ['SCOPP Dev GAP ECO ID', d.request.scoppId], ['F4 multidisciplinar', d.request.multidisciplinary], ['Número LUP', d.request.lupNumber],
+      ['Modo de pagamento SET', d.request.setPayment], ['LUP qualidade cliente', d.request.customerQualityLup]
+    ]),
+    '', '## Fornecedor', '', markdownFields([
+      ['Corporate Name', d.supplier.corporateName], ['Supplier F4 Manager', d.supplier.manager], ['Supplier Plant', d.supplier.plant], ['Data', d.supplier.date],
+      ['Position', d.supplier.position], ['Supplier Account', d.supplier.alcor], ['SET Order Account', d.supplier.setAccount], ['Implementation Leadtime', d.supplier.leadTime], ['Diversidade', d.supplier.diversity]
+    ]),
+    '', '## Impactos', '', markdownFields([
+      ['Moeda da oferta', d.impact.currency], ['Unidade', d.impact.units], ['Impacto técnico', d.impact.technicalImpact], ['Valores técnicos', technicalValues],
+      ['Ferramental', `${d.impact.toolingImpact} - ${d.impact.toolingAmount}`], ['SET', `${d.impact.setImpact} - ${d.impact.setAmount}`],
+      ['Produção em série', `${d.impact.massProductionImpact} - ${d.impact.massProductionAmount}`], ['Pós-venda', `${d.impact.aftersalesImpact} - ${d.impact.aftersalesAmount}`],
+      ['Embalagem específica', `${d.impact.packagingImpact} - ${d.impact.packagingAmount}`], ['Volume médio anual', d.impact.annualVolume], ['Impacto unitário', d.impact.unitImpact],
+      ['Impacto anual', d.impact.annualImpact], ['Custos iniciais', d.impact.initialCosts]
+    ]),
+    '', '## Composição do preço da peça', '', markdownFields([
+      ['CSR Impact', d.partPrice.csrImpact], ['Impacto no peso (g)', d.partPrice.weightImpact], ['Material', d.partPrice.material], ['Custo direto', d.partPrice.direct],
+      ['Custo indireto', d.partPrice.indirect], ['Custos gerais + margem', d.partPrice.general], ['Embalagem', d.partPrice.packaging], ['Total', d.partPrice.total]
+    ]),
+    '', '## Ferramental e SET', '', markdownFields([
+      ['Referência IDO', d.tooling.idoReference], ['Valor ferramental', d.tooling.amount], ['SET calculado', d.set.calculated], ['SET declarado', d.set.declared],
+      ['Quantidade amortização', d.set.amortizationQuantity], ['Duração estimada', d.set.estimatedDuration], ['Taxa financeira', d.set.financialFeeRate],
+      ['Custos financeiros', d.set.financialFeeAmount], ['Token', d.set.tokenAmount], ['Embalagem amortizada', d.set.amortizedPackaging]
+    ]),
+    '', '### Detalhamento SET', '', '| Seção | Descrição | Qtd. | Custo unitário | Total |', '|---|---|---:|---:|---:|', ...(setRows.length ? setRows : ['| — | — | — | — | — |']),
+    '', '## Referências impactadas', '', '| Referência atual | Nova referência | Último preço | Impacto peça | Impacto Token | Observações |', '|---|---|---:|---:|---:|---|', ...(refs.length ? refs : ['| — | — | — | — | — | — |']),
+    '', '## Antes / depois', '', markdownFields([
+      ['Condição anterior', d.beforeAfter.before], ['Condição proposta', d.beforeAfter.after], ['Anexos anteriores', (d.beforeAfter.beforeFiles || []).join(', ')], ['Anexos propostos', (d.beforeAfter.afterFiles || []).join(', ')]
+    ]),
+    '', '## Capacidade', '', markdownFields([
+      ['Capacidade anterior', d.capacity.previous], ['Nova capacidade', d.capacity.next], ['Variação', d.capacity.delta], ['Variação percentual', `${number(d.capacity.percent).toFixed(2)}%`]
+    ]),
+    '', '## DOA', '', markdownFields([
+      ['Uso da peça', d.doa.partUsage], ['Escopos', d.doa.scopes], ['Custos iniciais', d.doa.initialCosts], ['Nível custos iniciais', d.doa.initialDoa],
+      ['Impacto anual', d.doa.annualImpact], ['Nível FYI', d.doa.annualDoa], ['Observações', d.doa.notes]
+    ]),
+    '', '## Metadados', '', markdownFields([
+      ['Código F4', getF4Code(item)], ['Versão', version], ['Status', item.status], ['Criado por', item.supplier], ['Última alteração', item.updatedAt], ['Responsável atual', item.currentAssignee?.name || item.responsible]
+    ]), ''
+  ].join('\n');
+}
+
+function createVersionSnapshot(version, { final = false, createdBy = profile.name } = {}) {
+  f4.versionSnapshots = f4.versionSnapshots || {};
+  f4.versionSnapshots[version] = {
+    version,
+    createdAt: new Date().toISOString(),
+    createdBy,
+    final,
+    markdown: buildVersionMarkdown(f4, version, { final })
+  };
+}
+
+function signatureFromHistory(entry) {
+  return {
+    id: `legacy-${entry.step}-${entry.date || Math.random().toString(16).slice(2)}`,
+    decision: 'approve', step: entry.step, title: 'F4 aprovada por', name: entry.by || 'Responsável',
+    sector: historySector(entry), date: entry.date || f4.updatedAt, version: entry.version || '1.0.0', validationCycle: entry.validationCycle || 1, valid: true
+  };
+}
+
+function ensureVersioningState() {
+  if (!f4) return;
+  let changed = false;
+  f4.history = Array.isArray(f4.history) ? f4.history : [];
+
+  if (f4.versioningSchema !== 2) {
+    let version = '1.0.0';
+    let cycle = 1;
+    let finalBumped = false;
+    f4.history.forEach(entry => {
+      if (entry.contentChange === true) version = incrementVersion(version);
+      if (entry.step === 'cve' && entry.status === 'Aprovada' && !finalBumped) {
+        version = incrementVersion(version);
+        f4.finalVersion = version;
+        finalBumped = true;
+      }
+      entry.version = version;
+      entry.validationCycle = cycle;
+      if (['Devolvida', 'Rejeitada'].includes(entry.status)) cycle += 1;
+    });
+    f4.currentVersion = version;
+    f4.validationCycle = Math.max(1, cycle);
+    f4.versioningSchema = 2;
+    changed = true;
+  }
+
+  f4.currentVersion = normalizeVersion(f4.currentVersion || '1.0.0');
+  f4.validationCycle = f4.validationCycle || 1;
+  f4.versionSnapshots = f4.versionSnapshots || {};
+  f4.activeSignatures = Array.isArray(f4.activeSignatures) ? f4.activeSignatures : [];
+  f4.signatureAudit = Array.isArray(f4.signatureAudit) ? f4.signatureAudit : [];
+  f4.finalSignatures = Array.isArray(f4.finalSignatures) ? f4.finalSignatures : [];
+
+  if (!f4.signatureAudit.length) {
+    let active = [];
+    let cycle = 1;
+    f4.history.forEach(entry => {
+      entry.validationCycle = entry.validationCycle || cycle;
+      if (entry.status === 'Aprovada' && ['commercial','technical','manager','cve'].includes(entry.step)) {
+        const signature = signatureFromHistory(entry);
+        active = active.filter(item => item.step !== entry.step);
+        active.push(signature);
+        f4.signatureAudit.push(signature);
+      }
+      if (entry.status === 'Rejeitada' && ['commercial','technical','manager','cve'].includes(entry.step)) {
+        f4.signatureAudit.push({
+          id:`legacy-reject-${entry.step}-${entry.date || Math.random().toString(16).slice(2)}`,
+          decision:'reject', step:entry.step, title:'F4 rejeitada por', name:entry.by || 'Responsável',
+          sector:historySector(entry), date:entry.date || f4.updatedAt, version:entry.version || '1.0.0',
+          validationCycle:entry.validationCycle || cycle, reason:entry.guidance || entry.rejectionReason || '', valid:true
+        });
+      }
+      if (['Devolvida','Rejeitada'].includes(entry.status)) {
+        const ids = new Set(active.map(item => item.id));
+        f4.signatureAudit = f4.signatureAudit.map(item => ids.has(item.id)
+          ? { ...item, valid:false, invalidatedAt:entry.date || new Date().toISOString(), invalidationReason:`Fluxo reiniciado após ${entry.status.toLowerCase()}.` }
+          : item);
+        active = [];
+        cycle += 1;
+      }
+    });
+    f4.activeSignatures = f4.status === 'Aprovada' ? active : active;
+    if (f4.status === 'Aprovada') f4.finalSignatures = active;
+    changed = true;
+  }
+
+  if (!f4.versionSnapshots['1.0.0']) {
+    createVersionSnapshot('1.0.0', { createdBy: f4.supplier });
+    changed = true;
+  }
+  if (f4.status === 'Rejeitada' && f4.currentStep === 'rejected') {
+    f4.rejectedVersion = f4.rejectedVersion || f4.currentVersion;
+    f4.currentStep = 'supplier';
+    f4.returnedToProfile = 'supplier';
+    f4.currentAssignee = { profileId:'supplier', name:f4.supplier, role:'Fornecedor' };
+    f4.responsible = f4.supplier;
+    f4.sector = 'Fornecedor';
+    f4.stage = 'Versão rejeitada - aguardando correção';
+    changed = true;
+  }
+
+  if (f4.status === 'Aprovada') {
+    if (!f4.finalVersion) {
+      f4.finalVersion = f4.currentVersion === '1.0.0' ? incrementVersion('1.0.0') : f4.currentVersion;
+      f4.currentVersion = f4.finalVersion;
+      changed = true;
+    }
+    if (!f4.versionSnapshots[f4.finalVersion]) {
+      createVersionSnapshot(f4.finalVersion, { final: true, createdBy: latest('cve')?.by || 'CVE' });
+      changed = true;
+    }
+  }
+  if (changed) saveWorkflowState(f4);
+}
+
+function downloadTextFile(filename, text, mime = 'text/markdown;charset=utf-8') {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function downloadVersionMarkdown(version) {
+  const snapshot = f4.versionSnapshots?.[version];
+  if (!snapshot?.markdown) return showToast('O arquivo desta versão não está disponível.');
+  const code = getF4Code(f4).replace('/', '-');
+  downloadTextFile(`${code}_v${version}${snapshot.final ? '_FINAL' : ''}.md`, snapshot.markdown);
+}
+
+const editableFields = [
+  ['request.title','Título','text'], ['request.description','Descrição','textarea'], ['request.changeCause','Causa detalhada da modificação','textarea'],
+  ['request.vehicles','Veículos / órgãos','text'], ['request.changeOrigin','Origem da modificação','text'], ['request.scoppId','SCOPP Dev GAP ECO ID','text'], ['request.lupNumber','Número LUP','text'],
+  ['supplier.manager','Supplier F4 Manager','text'], ['supplier.plant','Supplier Plant','text'], ['supplier.leadTime','Implementation Leadtime','text'],
+  ['impact.currency','Moeda da oferta','text'], ['impact.units','Unidade','text'], ['impact.technicalValues.0.value','Impacto técnico principal','number'],
+  ['impact.toolingAmount','Valor de ferramental','number'], ['impact.setAmount','Valor SET','number'], ['impact.massProductionAmount','PDS Mass Production','number'],
+  ['impact.aftersalesAmount','PDS Aftersales','number'], ['impact.packagingAmount','Embalagem específica','number'], ['impact.annualVolume','Volume médio anual','number'],
+  ['partPrice.weightImpact','Impacto no peso (g)','number'], ['partPrice.material','Material','number'], ['partPrice.direct','Custo direto','number'], ['partPrice.indirect','Custo indireto','number'],
+  ['partPrice.general','Custos gerais + margem','number'], ['partPrice.packaging','Embalagem da peça','number'], ['tooling.idoReference','Referência IDO','text'],
+  ['set.amortizationQuantity','Quantidade de amortização','number'], ['set.estimatedDuration','Duração estimada','text'], ['set.financialFeeRate','Taxa financeira (%)','number'],
+  ['set.financialFeeAmount','Custos financeiros','number'], ['set.tokenAmount','Token','number'], ['set.amortizedPackaging','Embalagem específica amortizada','number'],
+  ['references.0.current','Referência atual principal','text'], ['references.0.newRef','Nova referência principal','text'], ['references.0.notes','Observação da referência','text'],
+  ['beforeAfter.before','Condição anterior','textarea'], ['beforeAfter.after','Condição proposta','textarea'], ['capacity.previous','Capacidade anterior','number'], ['capacity.next','Nova capacidade','number'],
+  ['doa.notes','Observações DOA','textarea']
+];
+
+function getPathValue(source, path) {
+  return path.split('.').reduce((value, key) => value?.[Number.isInteger(Number(key)) && String(Number(key)) === key ? Number(key) : key], source);
+}
+function setPathValue(target, path, value) {
+  const keys = path.split('.');
+  let cursor = target;
+  keys.forEach((key, index) => {
+    const numeric = Number.isInteger(Number(key)) && String(Number(key)) === key;
+    const actual = numeric ? Number(key) : key;
+    if (index === keys.length - 1) { cursor[actual] = value; return; }
+    const nextKey = keys[index + 1];
+    const nextIsNumeric = Number.isInteger(Number(nextKey)) && String(Number(nextKey)) === nextKey;
+    if (cursor[actual] == null) cursor[actual] = nextIsNumeric ? [] : {};
+    cursor = cursor[actual];
+  });
+}
+function canEditContent() {
+  return profile.id === 'supplier' && ['creation','supplier'].includes(f4.currentStep) && f4.status !== 'Aprovada';
+}
+
+let editExpanded = false;
+function contentEditorPanel() {
+  if (!canEditContent() || !editExpanded) return '';
+  const d = getReviewData(f4);
+  const controls = editableFields.map(([path,label,type]) => {
+    const value = getPathValue(d, path) ?? '';
+    const control = type === 'textarea'
+      ? `<textarea name="${esc(path)}" rows="3">${esc(value)}</textarea>`
+      : `<input name="${esc(path)}" type="${type}" ${type === 'number' ? 'step="0.001"' : ''} value="${esc(value)}">`;
+    return `<label class="content-edit-field ${type === 'textarea' ? 'is-wide' : ''}"><span>${esc(label)}</span>${control}</label>`;
+  }).join('');
+  return `<section class="card detail-card content-editor" id="contentEditorPanel">
+    <div class="detail-section-heading"><div><p class="detail-kicker">Edição controlada</p><h3>Editar conteúdo da F4</h3><p>Somente mudanças efetivas nos dados abaixo geram uma nova versão. Comentários e alterações de fluxo permanecem na versão atual.</p></div><span class="version-chip">Versão atual ${currentVersion()}</span></div>
+    <form id="contentEditForm"><div class="content-edit-grid">${controls}</div><div class="content-edit-footer"><span>Ao salvar uma alteração real, a próxima versão será ${incrementVersion(currentVersion())}.</span><div><button type="button" class="secondary-edit-button" id="cancelContentEdit">Cancelar</button><button type="submit" class="primary-edit-button">Salvar nova versão</button></div></div></form>
+  </section>`;
+}
+
+function saveContentEdition(form) {
+  const requiredTitle = form.elements['request.title']?.value.trim();
+  const requiredDescription = form.elements['request.description']?.value.trim();
+  if (!requiredTitle || !requiredDescription) {
+    showToast('Título e descrição não podem ficar vazios.');
+    (!requiredTitle ? form.elements['request.title'] : form.elements['request.description'])?.focus();
+    return false;
+  }
+  const before = getReviewData(f4);
+  const changed = [];
+  f4.contentOverrides = f4.contentOverrides || {};
+  editableFields.forEach(([path,label,type]) => {
+    const field = form.elements[path];
+    if (!field) return;
+    const value = type === 'number' ? number(field.value) : field.value.trim();
+    const previous = getPathValue(before, path);
+    const same = type === 'number' ? number(previous) === value : String(previous ?? '') === String(value ?? '');
+    if (same) return;
+    setPathValue(f4.contentOverrides, path, value);
+    changed.push(label);
+    if (path === 'request.title') f4.title = value;
+    if (path === 'request.description') f4.description = value;
+  });
+  if (!changed.length) {
+    showToast('Nenhuma alteração de conteúdo foi identificada. A versão foi mantida.');
+    return false;
+  }
+  if ((f4.activeSignatures || []).length) invalidateCurrentApprovals('Conteúdo da F4 alterado.');
+  const version = incrementVersion(currentVersion());
+  f4.currentVersion = version;
+  const now = new Date().toISOString();
+  const wasRejected = f4.status === 'Rejeitada';
+  if (wasRejected) {
+    f4.status = 'Rascunho';
+    f4.stage = 'Nova versão em correção';
+    f4.currentStep = 'supplier';
+    f4.returnedToProfile = 'supplier';
+    f4.currentAssignee = { profileId:'supplier', name:f4.supplier, role:'Fornecedor' };
+    f4.responsible = f4.supplier;
+    f4.sector = 'Fornecedor';
+    f4.currentAssigneeSince = now;
+  }
+  appendHistory({
+    step:'supplier', label:'Conteúdo da F4 alterado', date:now, status:f4.status, newStatus:f4.status,
+    by:profile.name, sector:'Fornecedor', description:`Campos alterados: ${changed.join(', ')}.`, contentChange:true, changedFields:changed, version
+  });
+  f4.updatedAt = now.slice(0,10);
+  createVersionSnapshot(version, { createdBy: profile.name });
+  saveWorkflowState(f4);
+  return true;
+}
+
+function printableField(label, value) {
+  return `<div class="pdf-field"><span>${esc(label)}</span><strong>${esc(value ?? '—')}</strong></div>`;
+}
+function signatureCard(signature) {
+  const logoUrl = new URL('../../assets/images/logo-renault.png', import.meta.url).href;
+  return `<article class="digital-signature"><div class="signature-brand"><img src="${logoUrl}" alt="Renault"></div><div class="signature-data"><strong>F4 aprovada por</strong><b>${esc(signature.name)}</b><span>${esc(signature.sector)}</span><span>${dateTime(signature.date)}</span></div></article>`;
+}
+function openFinalPdf() {
+  if (f4.status !== 'Aprovada' || !f4.finalVersion) return showToast('O PDF final só fica disponível após a aprovação do CVE.');
+  const win = window.open('', '_blank');
+  if (!win) return showToast('Permita pop-ups para gerar o PDF final.');
+  const d = getReviewData(f4);
+  const signatures = f4.finalSignatures || [];
+  const refs = (d.references || []).map(ref => `<tr><td>${esc(ref.current)}</td><td>${esc(ref.newRef)}</td><td>${esc(ref.notes)}</td></tr>`).join('');
+  win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(getF4Code(f4))} - ${esc(f4.finalVersion)} FINAL</title><style>
+    @page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#202126;font-size:10pt}.toolbar{position:sticky;top:0;display:flex;justify-content:flex-end;padding:10px;background:#fff;border-bottom:1px solid #ddd}.toolbar button{border:0;border-radius:7px;padding:9px 14px;background:#4f16b8;color:#fff;font-weight:700;cursor:pointer}.pdf-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #4f16b8;padding-bottom:12px;margin-bottom:16px}.pdf-header h1{font-size:18pt;margin:0}.pdf-header p{margin:5px 0 0;color:#666}.final-badge{border:1px solid #4f16b8;border-radius:999px;padding:6px 10px;color:#4f16b8;font-weight:700}.section{margin:0 0 15px;page-break-inside:avoid}.section h2{font-size:12pt;margin:0 0 8px;color:#4f16b8}.pdf-grid{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid #ddd}.pdf-field{padding:8px 10px;border-right:1px solid #ddd;border-bottom:1px solid #ddd}.pdf-field span{display:block;font-size:7.5pt;text-transform:uppercase;color:#777;margin-bottom:3px}.pdf-field strong{font-size:9.5pt}.pdf-table{width:100%;border-collapse:collapse}.pdf-table th,.pdf-table td{border:1px solid #ddd;padding:7px;text-align:left}.pdf-table th{background:#f5f3fa}.signatures{display:grid;gap:10px}.digital-signature{display:grid;grid-template-columns:105px 1fr;min-height:88px;border:2px solid #4f16b8;border-radius:8px;overflow:hidden;page-break-inside:avoid}.signature-brand{display:grid;place-items:center;background:#f7f3ff;border-right:1px solid #d8c9f7;padding:10px}.signature-brand img{max-width:72px;max-height:48px;object-fit:contain}.signature-data{display:grid;align-content:center;gap:3px;padding:10px 14px}.signature-data strong{color:#4f16b8;font-size:9pt}.signature-data b{font-size:11pt}.signature-data span{color:#555;font-size:8.5pt}.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;color:#777;font-size:8pt}@media print{.toolbar{display:none}}
+  </style></head><body><div class="toolbar"><button onclick="window.print()">Salvar / imprimir PDF</button></div><main>
+    <header class="pdf-header"><div><h1>F4 ${esc(getF4Code(f4))}</h1><p>${esc(d.request.title)}</p></div><span class="final-badge">VERSÃO ${esc(f4.finalVersion)} - FINAL</span></header>
+    <section class="section"><h2>Informações gerais</h2><div class="pdf-grid">${printableField('Fornecedor',f4.supplier)}${printableField('Projeto',f4.project)}${printableField('Descrição',d.request.description)}${printableField('Causa da modificação',d.request.changeCause)}${printableField('Status','Aprovada')}${printableField('Aprovação final',dateTime(f4.finalApprovedAt))}</div></section>
+    <section class="section"><h2>Impactos econômicos e técnicos</h2><div class="pdf-grid">${printableField('Moeda',d.impact.currency)}${printableField('Impacto técnico',d.impact.technicalValues?.map(v=>`${v.currency} ${v.value}`).join(' / '))}${printableField('Ferramental',d.impact.toolingAmount)}${printableField('SET',d.impact.setAmount)}${printableField('Volume anual',d.impact.annualVolume)}${printableField('Impacto anual',d.impact.annualImpact)}${printableField('Capacidade anterior',d.capacity.previous)}${printableField('Nova capacidade',d.capacity.next)}</div></section>
+    <section class="section"><h2>Referências impactadas</h2><table class="pdf-table"><thead><tr><th>Referência atual</th><th>Nova referência</th><th>Observação</th></tr></thead><tbody>${refs || '<tr><td colspan="3">Nenhuma referência.</td></tr>'}</tbody></table></section>
+    <section class="section"><h2>DOA</h2><div class="pdf-grid">${printableField('Uso da peça',d.doa.partUsage)}${printableField('Custos iniciais',d.doa.initialCosts)}${printableField('Nível custos iniciais',d.doa.initialDoa)}${printableField('Impacto anual',d.doa.annualImpact)}${printableField('Nível FYI',d.doa.annualDoa)}${printableField('Observações',d.doa.notes)}</div></section>
+    <section class="section"><h2>Assinaturas digitais da versão final</h2><div class="signatures">${signatures.map(signatureCard).join('') || '<p>Nenhuma assinatura válida registrada.</p>'}</div></section>
+    <div class="footer">Documento final da F4 ${esc(getF4Code(f4))}, versão ${esc(f4.finalVersion)}. Somente as aprovações válidas do ciclo que concluiu esta versão aparecem neste documento.</div>
+  </main><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script></body></html>`);
+  win.document.close();
 }
 
 const commentsKey = () => `f4-section-comments-${f4?.id || 'unknown'}`;
@@ -542,7 +969,7 @@ function approvalPanel() {
     ['cve', 'Decisão final', 'CVE']
   ];
   return `<section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">Aprovações</p><h3>Fluxo de validação</h3><p>O status é derivado do fluxo registrado para esta F4.</p></div></div><div class="approval-list">${rows.map(([key, label, sector]) => {
-    const h = latest(key), status = approvalStatus(key);
+    const h = latestInCurrentCycle(key), status = approvalStatus(key);
     return `<div class="approval-row"><div><strong>${label}</strong><small>${sector}${h?.by ? ` · ${esc(h.by)}` : ''}</small></div><div class="approval-row-status"><span class="review-status ${cls(status)}">${status}</span><small>${h?.date ? dateTime(h.date) : 'Ainda não iniciada'}</small></div></div>`;
   }).join('')}</div></section>`;
 }
@@ -556,7 +983,7 @@ function processTimeline() {
     ['manager', 'Decisão do gerente'], ['cve', 'Decisão do CVE'], ['final', f4.status === 'Rejeitada' ? 'Cancelada' : 'Aprovada / cancelada']
   ];
   return `<div class="process-timeline">${required.map(([step, label]) => {
-    const h = latest(step);
+    const h = step === 'creation' || step === 'final' ? latest(step) : latestInCurrentCycle(step);
     const current = (step === 'commercial' && f4.currentStep === 'commercial') ||
       (step === 'technical' && f4.currentStep === 'technical') ||
       (step === 'manager' && f4.currentStep === 'manager') ||
@@ -571,43 +998,106 @@ function processTimeline() {
 }
 
 function actionWorkspace() {
-  if (['Aprovada', 'Rejeitada'].includes(f4.status)) return '';
-  if (profile.id === 'supplier' && f4.currentStep === 'supplier' && f4.status === 'Devolvida') {
-    return `<section class="card detail-card action-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>Correção pelo fornecedor</h3><p>Revise as orientações registradas e reenvie a F4 para a validação comercial.</p></div></div><div class="review-form-footer"><span>A F4 retornará para Compras após o reenvio.</span><button class="review-submit-button" id="resubmitButton">Reenviar para validação comercial</button></div></section>`;
+  if (f4.status === 'Aprovada') return '';
+  if (profile.id === 'supplier' && f4.currentStep === 'supplier') {
+    if (f4.status === 'Rejeitada') {
+      return `<section class="card detail-card action-workspace rejected-version-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Versão rejeitada</p><h3>Crie uma nova versão antes de reenviar</h3><p>O motivo da rejeição permanece registrado no histórico. Use “Editar conteúdo da F4” no topo, altere os dados necessários e salve para gerar a próxima versão.</p></div><span class="responsibility-chip">Versão rejeitada ${currentVersion()}</span></div></section>`;
+    }
+    if (['Devolvida','Rascunho'].includes(f4.status)) {
+      return `<section class="card detail-card action-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>Correção pelo fornecedor</h3><p>Revise as orientações, faça as alterações de conteúdo necessárias e reenvie a F4 para a validação comercial.</p></div></div><div class="review-form-footer"><span>O reenvio não muda a versão; somente a edição de conteúdo gera uma nova versão.</span><button class="review-submit-button" id="resubmitButton">Reenviar para validação comercial</button></div></section>`;
+    }
   }
   const cfg = roleConfig[profile.id];
   if (!cfg) return '';
   if (f4.currentStep !== profile.id) {
     return `<section class="card detail-card waiting-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>${cfg.title}</h3><p>Esta F4 não está aguardando uma decisão deste perfil neste momento.</p></div><span class="responsibility-chip">Responsável atual: ${esc(f4.currentAssignee?.role || f4.sector)}</span></div></section>`;
   }
-  return `<section class="card detail-card review-workspace"><div class="detail-section-heading review-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>${cfg.title}</h3><p>Registre a decisão após revisar todas as informações da F4 acima.</p></div><span class="responsibility-chip">${cfg.subtitle}</span></div><form id="roleReviewForm" class="role-review-form"><fieldset class="review-decision-group"><legend>Decisão</legend><div class="review-decision-grid"><label class="review-decision-option"><input type="radio" name="decision" value="approve"><span class="decision-icon approve">✓</span><span><strong>Aprovar</strong><small>${profile.id === 'commercial' ? 'Encaminhar para Engenharia.' : profile.id === 'technical' ? 'Encaminhar para o gerente do projeto.' : profile.id === 'manager' ? 'Encaminhar para decisão do CVE.' : 'Concluir a F4 como aprovada.'}</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="return"><span class="decision-icon return">↩</span><span><strong>Devolver para correção</strong><small>Exige indicação do ponto com erro e orientação.</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="reject"><span class="decision-icon reject">×</span><span><strong>Não aprovar</strong><small>Encerra a F4 como rejeitada e exige justificativa.</small></span></label></div></fieldset><div class="correction-fields" id="correctionFields" hidden><fieldset class="error-location-group"><legend>Onde está o erro ou ponto de atenção? <b>*</b></legend><p>Marque uma ou mais áreas.</p><div class="error-location-grid">${cfg.areas.map(area => `<label><input type="checkbox" name="area" value="${esc(area)}"><span>${esc(area)}</span></label>`).join('')}</div></fieldset><label class="review-guidance-field"><span>Orientações / justificativa <b>*</b></span><textarea name="guidance" maxlength="1600" placeholder="Explique o problema, o que precisa ser corrigido e o resultado esperado."></textarea><small>O texto ficará visível para quem receber a F4.</small></label></div><div class="review-form-footer"><span>Responsável: ${esc(profile.name)} · ${esc(profile.role)}</span><button class="review-submit-button" type="submit">Registrar decisão</button></div></form></section>`;
+  return `<section class="card detail-card review-workspace"><div class="detail-section-heading review-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>${cfg.title}</h3><p>Registre a decisão após revisar todas as informações da F4 acima.</p></div><span class="responsibility-chip">${cfg.subtitle}</span></div><form id="roleReviewForm" class="role-review-form"><fieldset class="review-decision-group"><legend>Decisão</legend><div class="review-decision-grid"><label class="review-decision-option"><input type="radio" name="decision" value="approve"><span class="decision-icon approve">✓</span><span><strong>Aprovar</strong><small>${profile.id === 'commercial' ? 'Encaminhar para Engenharia.' : profile.id === 'technical' ? 'Encaminhar para o gerente do projeto.' : profile.id === 'manager' ? 'Encaminhar para decisão do CVE.' : 'Concluir a F4 como aprovada.'}</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="return"><span class="decision-icon return">↩</span><span><strong>Devolver para correção</strong><small>Exige indicação do ponto com erro e orientação.</small></span></label><label class="review-decision-option"><input type="radio" name="decision" value="reject"><span class="decision-icon reject">×</span><span><strong>Não aprovar</strong><small>Encerra a F4 como rejeitada e exige justificativa.</small></span></label></div></fieldset><div class="correction-fields" id="correctionFields" hidden><fieldset class="error-location-group"><legend>Onde está o erro ou ponto de atenção? <b>*</b></legend><p>Marque uma ou mais áreas.</p><div class="error-location-grid">${cfg.areas.map(area => `<label><input type="checkbox" name="area" value="${esc(area)}"><span>${esc(area)}</span></label>`).join('')}</div></fieldset><label class="review-guidance-field"><span id="guidanceLabel">Orientações para correção <b>*</b></span><textarea id="guidanceField" name="guidance" maxlength="1600" placeholder="Explique o problema, o que precisa ser corrigido e o resultado esperado."></textarea><small id="guidanceHelp">O texto ficará visível para quem receber a F4.</small></label></div><div class="review-form-footer"><span>Responsável: ${esc(profile.name)} · ${esc(profile.role)}</span><button class="review-submit-button" type="submit">Registrar decisão</button></div></form></section>`;
 }
 
 function transition(decision, areas, guidance) {
-  const now = new Date().toISOString(), step = profile.id, label = roleConfig[step].title;
+  const now = new Date().toISOString();
+  const step = profile.id;
+  const label = roleConfig[step].title;
+  const cycle = f4.validationCycle || 1;
   f4.history = f4.history || [];
+
   if (decision === 'reject') {
-    appendHistory({ step, label, date: now, status: 'Rejeitada', newStatus: 'Rejeitada', by: profile.name, sector: historySectorByStep[step], guidance, errorAreas: areas });
-    f4.status = 'Rejeitada'; f4.stage = 'Rejeitada'; f4.currentStep = 'rejected'; f4.sector = profile.id === 'cve' ? 'CVE' : profile.role;
+    const rejectionSignature = signatureFor('reject', step, now, guidance);
+    registerSignature(rejectionSignature, { active: false });
+    appendHistory({
+      step, label: `${label} - rejeição`, date: now, status: 'Rejeitada', newStatus: 'Rejeitada', by: profile.name,
+      sector: historySectorByStep[step], guidance, rejectionReason: guidance, errorAreas: areas, validationCycle: cycle
+    });
+    invalidateCurrentApprovals(`F4 rejeitada por ${profile.name}.`);
+    f4.rejectedVersion = currentVersion();
+    f4.status = 'Rejeitada';
+    f4.stage = 'Versão rejeitada - aguardando correção';
+    f4.currentStep = 'supplier';
+    f4.returnedToProfile = 'supplier';
+    f4.returnOrigin = profile.id;
+    f4.currentAssignee = { profileId:'supplier', name:f4.supplier, role:'Fornecedor' };
+    f4.responsible = f4.supplier;
+    f4.sector = 'Fornecedor';
+    f4.currentAssigneeSince = now;
   } else if (decision === 'return') {
-    appendHistory({ step, label, date: now, status: 'Devolvida', newStatus: 'Devolvida', by: profile.name, sector: historySectorByStep[step], returnedTo: 'Fornecedor', guidance, errorAreas: areas });
-    f4.status = 'Devolvida'; f4.stage = 'Correção pelo fornecedor'; f4.currentStep = 'supplier'; f4.returnedToProfile = 'supplier'; f4.returnOrigin = profile.id;
+    appendHistory({
+      step, label, date: now, status: 'Devolvida', newStatus: 'Devolvida', by: profile.name,
+      sector: historySectorByStep[step], returnedTo: 'Fornecedor', guidance, errorAreas: areas, validationCycle: cycle
+    });
+    invalidateCurrentApprovals(`F4 devolvida para correção por ${profile.name}.`);
+    f4.status = 'Devolvida';
+    f4.stage = 'Correção pelo fornecedor';
+    f4.currentStep = 'supplier';
+    f4.returnedToProfile = 'supplier';
+    f4.returnOrigin = profile.id;
     f4.currentAssignee = { profileId: 'supplier', name: f4.supplier, role: 'Fornecedor' };
-    f4.responsible = f4.supplier; f4.sector = 'Fornecedor'; f4.currentAssigneeSince = now;
+    f4.responsible = f4.supplier;
+    f4.sector = 'Fornecedor';
+    f4.currentAssigneeSince = now;
   } else {
-    appendHistory({ step, label, date: now, status: 'Aprovada', newStatus: historyNewStatus({ step, status: 'Aprovada' }), by: profile.name, sector: historySectorByStep[step] });
     const next = {
       commercial: ['technical', 'Em validação técnica', 'Engenharia', { profileId: 'technical', name: 'Mariana Silva', role: 'Engenharia · Validação técnica' }],
       technical: ['manager', 'Em decisão do gerente', 'Gerência do projeto', { profileId: 'manager', name: 'Marcos Oliveira', role: 'Gerente do projeto' }],
       manager: ['cve', 'Em decisão do CVE', 'CVE', { profileId: 'cve', name: 'Analice Mendes', role: 'CVE · Decisão final' }]
     };
+
     if (step === 'cve') {
-      appendHistory({ step: 'final', label: 'Aprovação final', date: now, status: 'Concluída', newStatus: 'Aprovada', by: profile.name, sector: 'CVE' });
-      f4.status = 'Aprovada'; f4.stage = 'Aprovada'; f4.currentStep = 'approved';
+      const finalVersion = incrementVersion(currentVersion());
+      f4.currentVersion = finalVersion;
+      f4.finalVersion = finalVersion;
+      const cveSignature = { ...signatureFor('approve', step, now), version: finalVersion, valid: true };
+      registerSignature(cveSignature, { active: true });
+      appendHistory({
+        step, label, date: now, status: 'Aprovada', newStatus: 'Aprovada', by: profile.name,
+        sector: historySectorByStep[step], version: finalVersion, validationCycle: cycle, finalApproval: true
+      });
+      f4.status = 'Aprovada';
+      f4.stage = 'Aprovada';
+      f4.currentStep = 'approved';
+      f4.finalApprovedAt = now;
+      f4.finalSignatures = (f4.activeSignatures || []).map(signature => ({ ...signature, documentVersion: finalVersion, valid: true }));
+      appendHistory({
+        step: 'final', label: 'Versão final aprovada', date: now, status: 'Concluída', newStatus: 'Aprovada',
+        by: profile.name, sector: 'CVE', version: finalVersion, validationCycle: cycle, finalApproval: true
+      });
+      createVersionSnapshot(finalVersion, { final: true, createdBy: profile.name });
     } else {
+      const signature = { ...signatureFor('approve', step, now), valid: true };
+      registerSignature(signature, { active: true });
+      appendHistory({
+        step, label, date: now, status: 'Aprovada', newStatus: historyNewStatus({ step, status: 'Aprovada' }),
+        by: profile.name, sector: historySectorByStep[step], validationCycle: cycle
+      });
       const [nextStep, status, sector, assignee] = next[step];
-      f4.currentStep = nextStep; f4.status = status; f4.stage = status.replace('Em ', ''); f4.sector = sector;
-      f4.currentAssignee = assignee; f4.responsible = assignee.name; f4.currentAssigneeSince = now; f4.returnedToProfile = null;
+      f4.currentStep = nextStep;
+      f4.status = status;
+      f4.stage = status.replace('Em ', '');
+      f4.sector = sector;
+      f4.currentAssignee = assignee;
+      f4.responsible = assignee.name;
+      f4.currentAssigneeSince = now;
+      f4.returnedToProfile = null;
       f4.assignedProfiles = [...new Set([...(f4.assignedProfiles || []), nextStep])];
     }
   }
@@ -623,7 +1113,7 @@ function render() {
     return;
   }
   content.innerHTML = `
-    <section class="detail-heading"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div></section>
+    <section class="detail-heading"><div class="detail-heading-main"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div><div class="detail-version-actions"><span class="version-chip ${f4.finalVersion === currentVersion() ? 'is-final' : ''}">Versão ${currentVersion()}${f4.finalVersion === currentVersion() ? ' · FINAL' : ''}</span>${canEditContent() ? `<button class="version-action-button" id="editContentButton" type="button">${editExpanded ? 'Fechar edição' : 'Editar conteúdo da F4'}</button>` : ''}${f4.status === 'Aprovada' && f4.finalVersion ? '<button class="version-action-button primary" id="finalPdfButton" type="button">Gerar PDF final</button>' : ''}</div></div></section>
     <div class="detail-grid">
       <section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">F4</p><h3>Informações da solicitação</h3><p>Resumo operacional e responsável atual.</p></div></div><div class="current-owner-banner"><div class="current-owner-avatar">${esc((f4.currentAssignee?.name || '?').split(' ').map(n => n[0]).slice(0, 2).join(''))}</div><div><span>F4 está com</span><strong>${esc(f4.currentAssignee?.name || f4.responsible)}</strong><small>${esc(f4.currentAssignee?.role || f4.sector)} · ${elapsed(f4.currentAssigneeSince)}</small></div></div><div class="detail-fields"><div class="detail-field"><span>Código F4</span><strong>${getF4Code(f4)}</strong></div><div class="detail-field"><span>Fornecedor</span><strong>${esc(f4.supplier)}</strong></div><div class="detail-field"><span>Projeto</span><strong>${esc(f4.project || '—')}</strong></div><div class="detail-field"><span>Setor atual</span><strong>${esc(f4.sector)}</strong></div><div class="detail-field"><span>Etapa atual</span><strong>${esc(f4.stage)}</strong></div><div class="detail-field"><span>Última atualização</span><strong>${fmt(f4.updatedAt)}</strong></div><div class="detail-field"><span>Prazo</span><strong>${fmt(f4.dueDate)}</strong></div></div></section>
       <aside class="card detail-card process-card"><div class="detail-section-heading"><div><p class="detail-kicker">Andamento</p><h3>Fluxo da F4</h3></div></div>${processTimeline()}
@@ -637,6 +1127,7 @@ function render() {
       </aside>
     </div>
     ${changeHistoryPanel()}
+    ${contentEditorPanel()}
     <div class="complete-review-sticky">
       <section class="complete-review-heading"><div><p class="detail-kicker">Dossiê para validação</p><h3>Informações completas da F4</h3><p>Revise todos os dados registrados antes de aprovar, devolver ou rejeitar a solicitação. Cada seção permite registrar comentários específicos.</p></div><span>10 seções de análise</span></section>
       ${reviewNavigation()}
@@ -794,7 +1285,21 @@ function setupComments() {
         createdAt: new Date().toISOString()
       });
       saveComments(comments);
-      showToast('Comentário registrado nesta seção.');
+      const now = new Date().toISOString();
+      appendHistory({
+        step: profile.id === 'supplier' ? 'supplier' : profile.id,
+        label: `Comentário em ${form.dataset.sectionTitle}`,
+        date: now,
+        status: f4.status,
+        newStatus: f4.status,
+        by: profile.name,
+        sector: profile.id === 'supplier' ? 'Fornecedor' : (historySectorByStep[profile.id] || profile.role),
+        description: text,
+        commentSection: form.dataset.sectionId
+      });
+      f4.updatedAt = now.slice(0, 10);
+      saveWorkflowState(f4);
+      showToast('Comentário registrado nesta seção. A versão da F4 foi mantida.');
       const targetId = form.dataset.sectionId;
       render();
       requestAnimationFrame(() => document.querySelector(`#section-${CSS.escape(targetId)}`)?.scrollIntoView({ block: 'center' }));
@@ -802,15 +1307,68 @@ function setupComments() {
   });
 }
 
+function setupVersionDownloads() {
+  document.querySelectorAll('[data-download-version]').forEach(button => {
+    button.onclick = () => downloadVersionMarkdown(button.dataset.downloadVersion);
+  });
+}
+
+function setupContentEditor() {
+  const toggle = document.querySelector('#editContentButton');
+  if (toggle) toggle.onclick = () => {
+    editExpanded = !editExpanded;
+    render();
+    if (editExpanded) requestAnimationFrame(() => document.querySelector('#contentEditorPanel')?.scrollIntoView({ behavior:'smooth', block:'start' }));
+  };
+  const cancel = document.querySelector('#cancelContentEdit');
+  if (cancel) cancel.onclick = () => { editExpanded = false; render(); };
+  const form = document.querySelector('#contentEditForm');
+  if (form) form.onsubmit = event => {
+    event.preventDefault();
+    if (!saveContentEdition(form)) return;
+    const newVersion = currentVersion();
+    editExpanded = false;
+    showToast(`Conteúdo atualizado. Nova versão ${newVersion} criada e arquivo .md registrado.`);
+    f4 = getF4ById(f4.id);
+    render();
+  };
+}
+
+function setupFinalPdf() {
+  const button = document.querySelector('#finalPdfButton');
+  if (button) button.onclick = openFinalPdf;
+}
+
+function updateDecisionFields(form, correctionFields) {
+  const decision = form.elements.decision?.value;
+  correctionFields.hidden = !['return','reject'].includes(decision);
+  const label = document.querySelector('#guidanceLabel');
+  const field = document.querySelector('#guidanceField');
+  const help = document.querySelector('#guidanceHelp');
+  if (!label || !field || !help) return;
+  if (decision === 'reject') {
+    label.innerHTML = 'Motivo da rejeição <b>*</b>';
+    field.placeholder = 'Informe obrigatoriamente por que esta F4 está sendo rejeitada.';
+    help.textContent = 'O motivo ficará registrado no histórico desta versão. Se uma versão posterior for aprovada, esta rejeição não aparecerá no PDF final.';
+  } else {
+    label.innerHTML = 'Orientações para correção <b>*</b>';
+    field.placeholder = 'Explique o problema, o que precisa ser corrigido e o resultado esperado.';
+    help.textContent = 'O texto ficará visível para quem receber a F4.';
+  }
+}
+
 function setup() {
   setupHistoryToggle();
+  setupVersionDownloads();
+  setupContentEditor();
+  setupFinalPdf();
   setupComments();
   setupSectionNavigation();
   const form = document.querySelector('#roleReviewForm');
   const correctionFields = document.querySelector('#correctionFields');
   if (form) {
     form.querySelectorAll('[name="decision"]').forEach(radio => {
-      radio.onchange = () => { correctionFields.hidden = !['return', 'reject'].includes(form.elements.decision.value); };
+      radio.onchange = () => updateDecisionFields(form, correctionFields);
     });
     form.onsubmit = event => {
       event.preventDefault();
@@ -818,7 +1376,8 @@ function setup() {
       if (!decision) return showToast('Selecione uma decisão.');
       const areas = [...form.querySelectorAll('[name="area"]:checked')].map(input => input.value);
       const guidance = form.elements.guidance?.value.trim() || '';
-      if (['return', 'reject'].includes(decision) && (!areas.length || !guidance)) return showToast('Marque onde está o erro e informe a orientação/justificativa.');
+      if (decision === 'return' && (!areas.length || !guidance)) return showToast('Marque onde está o erro e informe a orientação para correção.');
+      if (decision === 'reject' && !guidance) return showToast('Informe o motivo da rejeição para continuar.');
       transition(decision, areas, guidance);
       showToast('Decisão registrada e fluxo atualizado.');
       f4 = getF4ById(f4.id);
@@ -829,7 +1388,7 @@ function setup() {
   if (resubmitButton) resubmitButton.onclick = () => {
     const now = new Date().toISOString();
     appendHistory({ step: 'commercial', label: 'Reenvio para validação comercial', date: now, status: 'Em andamento', newStatus: 'Em validação comercial', by: profile.name, sector: 'Fornecedor', description: 'F4 corrigida pelo fornecedor e reenviada para nova validação comercial.' });
-    f4.status = 'Em validação comercial'; f4.stage = 'Validação comercial'; f4.currentStep = 'commercial'; f4.returnedToProfile = null;
+    f4.status = 'Em validação comercial'; f4.stage = 'Validação comercial'; f4.currentStep = 'commercial'; f4.returnedToProfile = null; f4.rejectedVersion = null;
     f4.currentAssignee = { profileId: 'commercial', name: 'Carlos Braatz', role: 'Compras · Validação comercial' };
     f4.responsible = 'Carlos Braatz'; f4.sector = 'Compras'; f4.currentAssigneeSince = now;
     f4.assignedProfiles = [...new Set([...(f4.assignedProfiles || []), 'commercial'])];
@@ -842,4 +1401,5 @@ function setup() {
 }
 
 normalizeSupplierSubmissionHistory();
+ensureVersioningState();
 render();
