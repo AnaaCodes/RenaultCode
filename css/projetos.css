@@ -320,3 +320,20 @@ button.project-summary-card.is-active::after {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Cartões de projeto navegáveis */
+.project-card[data-project-id] {
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.project-card[data-project-id]:hover {
+  transform: translateY(-1px);
+  border-color: rgba(79, 22, 184, .16);
+  box-shadow: 0 8px 22px rgba(25, 17, 45, .09);
+}
+
+.project-card[data-project-id]:focus-visible {
+  outline: 3px solid rgba(79, 22, 184, .18);
+  outline-offset: 2px;
+}

@@ -78,7 +78,7 @@ if (mountAppShell({ activePage: 'projetos', title: 'Projetos' })) {
     }
 
     projectsGrid.innerHTML = projects.map(project => `
-      <article class="project-card" data-project-id="${project.id}">
+      <article class="project-card" data-project-id="${project.id}" role="link" tabindex="0" aria-label="Abrir projeto ${project.id} — ${project.name}">
         <div class="project-card-top">
           <div class="project-heading">
             <div class="project-title-row">
@@ -112,10 +112,27 @@ if (mountAppShell({ activePage: 'projetos', title: 'Projetos' })) {
         </div>
       </article>`).join('');
 
+    const openProject = projectId => {
+      window.location.href = `./projeto.html?id=${encodeURIComponent(projectId)}`;
+    };
+
     projectsGrid.querySelectorAll('[data-open-project]').forEach(button => {
-      button.addEventListener('click', () => {
-        const project = PROJECTS.find(item => item.id === button.dataset.openProject);
-        showToast(`${project.id} — ${project.name}: este projeto será aberto.`);
+      button.addEventListener('click', event => {
+        event.stopPropagation();
+        openProject(button.dataset.openProject);
+      });
+    });
+
+    projectsGrid.querySelectorAll('.project-card[data-project-id]').forEach(card => {
+      card.addEventListener('click', event => {
+        if (event.target.closest('button, a, select, input')) return;
+        openProject(card.dataset.projectId);
+      });
+      card.addEventListener('keydown', event => {
+        if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('button, a, select, input')) {
+          event.preventDefault();
+          openProject(card.dataset.projectId);
+        }
       });
     });
   };

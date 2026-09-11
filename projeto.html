@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Detalhes do projeto e distribuição das F4 por setor">
+  <title>Projeto | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/projeto.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <div class="workspace">
+      <div id="headerMount"></div>
+
+      <main class="main-content project-detail-page">
+        <div class="page-container project-detail-container">
+          <nav class="project-breadcrumb" aria-label="Navegação estrutural">
+            <a href="./projetos.html">Projetos</a>
+            <span aria-hidden="true">›</span>
+            <span id="breadcrumbProject">Detalhes do projeto</span>
+          </nav>
+
+          <section class="project-detail-hero" id="projectHero" aria-labelledby="projectTitle"></section>
+
+          <section class="project-detail-summary" id="projectSummary" aria-label="Resumo do projeto"></section>
+
+          <section class="project-overview-panel" aria-labelledby="projectOverviewTitle">
+            <div class="project-section-heading">
+              <div>
+                <p class="eyebrow">Informações do projeto</p>
+                <h2 id="projectOverviewTitle">Visão geral</h2>
+                <p>Dados consolidados do programa, governança e andamento do projeto.</p>
+              </div>
+            </div>
+            <div class="project-general-grid" id="projectGeneralInfo"></div>
+            <div class="project-lifecycle" id="projectLifecycle"></div>
+          </section>
+
+          <section class="project-sectors-area" aria-labelledby="projectSectorsTitle">
+            <div class="project-section-heading sector-heading">
+              <div>
+                <p class="eyebrow">Fluxo por área</p>
+                <h2 id="projectSectorsTitle">Informações e F4s por setor</h2>
+                <p>Veja quem responde por cada etapa e quais F4s estão atualmente sob responsabilidade de cada setor.</p>
+              </div>
+            </div>
+
+            <div class="sector-jump-nav" id="sectorNav" aria-label="Navegação entre setores"></div>
+            <div class="sector-sections" id="sectorSections"></div>
+          </section>
+
+          <section class="project-finalized-panel" id="projectFinalized" aria-labelledby="projectFinalizedTitle"></section>
+
+          <section class="project-not-found" id="projectNotFound" hidden>
+            <strong>Projeto não encontrado</strong>
+            <span>O projeto informado não existe ou não está disponível para este perfil.</span>
+            <a class="project-back-button" href="./projetos.html">Voltar para projetos</a>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pages/projeto.js"></script>
+</body>
+</html>
