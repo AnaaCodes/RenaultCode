@@ -68,7 +68,8 @@ export function saveWorkflowState(f4) {
     'title','description','project','status','updatedAt','responsible','sector','stage','currentStep',
     'returnedToProfile','returnOrigin','currentAssigneeSince','currentAssignee','assignedProfiles','history',
     'currentVersion','finalVersion','versioningSchema','versionSnapshots','validationCycle','activeSignatures',
-    'signatureAudit','finalSignatures','finalApprovedAt','rejectedVersion','contentOverrides'
+    'signatureAudit','finalSignatures','finalApprovedAt','rejectedVersion','contentOverrides',
+    'pendingReviewChanges','lastSubmittedChanges'
   ];
   const payload = Object.fromEntries(
     fields

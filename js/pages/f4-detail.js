@@ -222,23 +222,66 @@ function historyNewStatus(entry) {
   return entry.status || 'Pendente';
 }
 
+const expandedHistoryRows = new Set();
+
+function historyChangeDetails(entry) {
+  const blocks = [];
+  const guidance = entry.rejectionReason || entry.guidance || '';
+  if (guidance) {
+    blocks.push(`<div class="history-detail-block is-guidance"><span>${entry.rejectionReason ? 'Motivo da rejeição' : 'Orientação registrada'}</span><p>${esc(guidance)}</p></div>`);
+  }
+  if (Array.isArray(entry.errorAreas) && entry.errorAreas.length) {
+    blocks.push(`<div class="history-detail-block"><span>Locais indicados para ajuste</span><div class="history-detail-tags">${entry.errorAreas.map(area => `<b>${esc(area)}</b>`).join('')}</div></div>`);
+  }
+
+  const directChanges = Array.isArray(entry.changeDetails) ? entry.changeDetails : [];
+  const submittedChanges = entry.submittedChanges && typeof entry.submittedChanges === 'object'
+    ? Object.values(entry.submittedChanges).flatMap(section => Array.isArray(section?.changes) ? section.changes : [])
+    : [];
+  const changes = directChanges.length ? directChanges : submittedChanges;
+  if (changes.length) {
+    blocks.push(`<div class="history-detail-block"><span>Campos alterados</span><div class="history-change-list">${changes.map(change => `
+      <div class="history-change-item">
+        <strong>${esc(change.label || change.path || 'Campo alterado')}</strong>
+        <div><span>Antes</span><p>${esc(change.before ?? '—')}</p></div>
+        <div><span>Depois</span><p>${esc(change.after ?? '—')}</p></div>
+      </div>`).join('')}</div></div>`);
+  } else if (Array.isArray(entry.changedFields) && entry.changedFields.length) {
+    blocks.push(`<div class="history-detail-block"><span>Campos alterados</span><div class="history-detail-tags">${entry.changedFields.map(fieldName => `<b>${esc(fieldName)}</b>`).join('')}</div></div>`);
+  }
+
+  if (entry.commentSection || String(entry.label || '').startsWith('Comentário em')) {
+    blocks.push(`<div class="history-detail-block"><span>Comentário registrado</span><p>${esc(entry.description || 'Comentário registrado nesta seção.')}</p></div>`);
+  }
+  if (entry.returnedTo) {
+    blocks.push(`<div class="history-detail-block compact"><span>Destino da devolução</span><p>${esc(entry.returnedTo)}</p></div>`);
+  }
+  blocks.push(`<div class="history-detail-meta"><span>Versão ${esc(entry.version || currentVersion())}</span><span>Ciclo de validação ${esc(entry.validationCycle || 1)}</span><span>${dateTime(entry.date || f4.updatedAt)}</span></div>`);
+  return blocks.join('');
+}
+
 function changeHistoryPanel() {
   const history = (f4.history || []).map(entry => ({ ...entry, version: normalizeVersion(entry.version || currentVersion()) })).reverse();
 
-  const rows = history.map(entry => `<tr>
-    <td><strong class="history-version">${esc(entry.version)}</strong></td>
-    <td><strong>${esc(entry.label || entry.step || 'Alteração da F4')}</strong></td>
-    <td>${esc(historyDescription(entry))}</td>
-    <td><span class="review-status ${cls(historyNewStatus(entry))}">${esc(historyNewStatus(entry))}</span></td>
-    <td>${esc(entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema'))}</td>
-    <td>${esc(historySector(entry))}</td>
-    <td>${dateTime(entry.date || f4.updatedAt)}</td>
-    <td><button class="history-download-button" type="button" data-download-history="${esc(entry.snapshotId || '')}">Baixar PDF</button></td>
-  </tr>`).join('');
+  const rows = history.map((entry, index) => {
+    const rowId = entry.snapshotId || `history-${index}`;
+    const isOpen = expandedHistoryRows.has(rowId);
+    return `<tr class="history-main-row ${isOpen ? 'is-open' : ''}" data-history-row="${esc(rowId)}" tabindex="0" aria-expanded="${isOpen ? 'true' : 'false'}">
+      <td><span class="history-expand-icon">⌄</span><strong class="history-version">${esc(entry.version)}</strong></td>
+      <td><strong>${esc(entry.label || entry.step || 'Alteração da F4')}</strong></td>
+      <td>${esc(historyDescription(entry))}</td>
+      <td><span class="review-status ${cls(historyNewStatus(entry))}">${esc(historyNewStatus(entry))}</span></td>
+      <td>${esc(entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema'))}</td>
+      <td>${esc(historySector(entry))}</td>
+      <td>${dateTime(entry.date || f4.updatedAt)}</td>
+      <td><button class="history-download-button" type="button" data-download-history="${esc(entry.snapshotId || '')}">Baixar PDF</button></td>
+    </tr>
+    <tr class="history-detail-row" data-history-detail="${esc(rowId)}" ${isOpen ? '' : 'hidden'}><td colspan="8"><div class="history-expanded-content">${historyChangeDetails(entry)}</div></td></tr>`;
+  }).join('');
 
   return `<section class="card detail-card change-history-panel" id="changeHistoryPanel" ${historyExpanded ? '' : 'hidden'}>
     <div class="detail-section-heading history-panel-heading">
-      <div><p class="detail-kicker">Rastreabilidade</p><h3>Histórico de alterações</h3><p>Todas as ações permanecem registradas, mas a versão só muda quando o conteúdo da F4 é alterado ou quando o CVE gera a versão final.</p></div>
+      <div><p class="detail-kicker">Rastreabilidade</p><h3>Histórico de alterações</h3><p>Clique em qualquer registro para abrir os detalhes da ação, incluindo campos alterados, comentários e orientações de correção.</p></div>
       <span class="history-count">${history.length} registro${history.length === 1 ? '' : 's'}</span>
     </div>
     <div class="review-table-wrap history-table-wrap">
@@ -685,8 +728,89 @@ function cleanMarkdownText(value) {
     .trim();
 }
 
+function parseSnapshotMarkdown(markdown) {
+  const documentData = { title: 'F4', meta: {}, sections: [] };
+  const lines = String(markdown || '').split(/\r?\n/);
+  let section = null;
+  let subsection = null;
+
+  const pushTable = table => {
+    if (!section) return;
+    const target = subsection || section;
+    target.blocks = target.blocks || [];
+    const headers = table[0] || [];
+    const rows = table.slice(1);
+    if (headers.length === 2 && normalize(headers[0]) === 'campo' && normalize(headers[1]) === 'valor') {
+      target.blocks.push({ type: 'fields', fields: rows.map(row => ({ label: row[0] || '—', value: row[1] || '—' })) });
+    } else {
+      target.blocks.push({ type: 'table', headers, rows });
+    }
+  };
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const raw = lines[i];
+    const line = raw.trim();
+    if (!line) continue;
+
+    const h1 = line.match(/^#\s+(.*)$/);
+    if (h1) { documentData.title = cleanMarkdownText(h1[1]); continue; }
+
+    const h2 = line.match(/^##\s+(.*)$/);
+    if (h2) {
+      section = { title: cleanMarkdownText(h2[1]), blocks: [], subsections: [] };
+      documentData.sections.push(section);
+      subsection = null;
+      continue;
+    }
+
+    const h3 = line.match(/^###\s+(.*)$/);
+    if (h3 && section) {
+      subsection = { title: cleanMarkdownText(h3[1]), blocks: [] };
+      section.subsections.push(subsection);
+      continue;
+    }
+
+    const meta = line.match(/^\*\*(.+?):\*\*\s*(.*?)\s*$/);
+    if (meta && !section) {
+      documentData.meta[cleanMarkdownText(meta[1])] = cleanMarkdownText(meta[2]);
+      continue;
+    }
+
+    if (line.startsWith('|') && line.endsWith('|')) {
+      const tableLines = [];
+      while (i < lines.length) {
+        const current = lines[i].trim();
+        if (!current.startsWith('|') || !current.endsWith('|')) break;
+        tableLines.push(current);
+        i += 1;
+      }
+      i -= 1;
+      const parsed = tableLines
+        .filter(row => !/^\|\s*:?-{3,}/.test(row))
+        .map(row => row.slice(1, -1).split('|').map(cell => cleanMarkdownText(cell)));
+      if (parsed.length) pushTable(parsed);
+      continue;
+    }
+  }
+  return documentData;
+}
+
+const pdfSectionDesign = {
+  'Solicitação': ['DADOS DA F4', 'Solicitação e contexto da modificação', 'Informações que explicam o que está sendo alterado e por quê.'],
+  'Fornecedor': ['INFORMAÇÕES DO FORNECEDOR', 'Dados do fornecedor e identificação da proposta', 'Dados usados para identificar o responsável pela F4 e as condições de implementação.'],
+  'Impactos': ['IMPACTOS DA F4', 'Síntese econômica e impactos', 'Valores consolidados usados nas análises comercial, técnica e financeira.'],
+  'Composição do preço da peça': ['PREÇO DA PEÇA', 'Composição detalhada do preço', 'Detalhamento dos componentes econômicos considerados na proposta.'],
+  'Ferramental e SET': ['CUSTOS INICIAIS', 'Ferramental, SET e amortização', 'Detalhes usados para validar ferramental, serviços de engenharia e condições financeiras.'],
+  'Referências impactadas': ['REFERÊNCIAS', 'Referências impactadas pela modificação', 'Relação entre referências atuais, novas referências e seus respectivos impactos.'],
+  'Antes / depois': ['COMPARATIVO', 'Condição antes e depois', 'Registro da condição atual e da condição proposta para implementação.'],
+  'Capacidade': ['CAPACIDADE PRODUTIVA', 'Impacto de capacidade', 'Comparativo de capacidade antes e depois da implementação da F4.'],
+  'DOA': ['ALÇADAS E APROVAÇÕES', 'DOA e níveis de decisão', 'Informações utilizadas para determinar os níveis de aprovação necessários.'],
+  'Metadados': ['RASTREABILIDADE', 'Metadados da F4', 'Informações de identificação, versão, status e responsabilidade atual.'],
+  'Registro desta alteração': ['HISTÓRICO DA F4', 'Registro desta alteração', 'Dados da movimentação que originou este snapshot do histórico.']
+};
+
 function wrapPdfText(text, maxChars = 92) {
-  const source = String(text || '').trim();
+  const source = String(text || '').replace(/\s+/g, ' ').trim();
   if (!source) return [''];
   const words = source.split(/\s+/);
   const lines = [];
@@ -700,28 +824,9 @@ function wrapPdfText(text, maxChars = 92) {
   return lines;
 }
 
-function markdownToPdfLines(markdown) {
-  const output = [];
-  String(markdown || '').split(/\r?\n/).forEach(raw => {
-    const line = raw.trim();
-    if (!line) { output.push({ text:'', kind:'blank' }); return; }
-    if (/^\|\s*:?-{3,}/.test(line)) return;
-    const heading = line.match(/^(#{1,3})\s+(.*)$/);
-    if (heading) {
-      const level = heading[1].length;
-      wrapPdfText(cleanMarkdownText(heading[2]), level === 1 ? 62 : 78).forEach(text => output.push({ text, kind:`h${level}` }));
-      return;
-    }
-    if (line.startsWith('|') && line.endsWith('|')) {
-      const cells = line.slice(1, -1).split('|').map(cell => cleanMarkdownText(cell));
-      if (cells.every(cell => /^:?-{3,}:?$/.test(cell))) return;
-      const text = cells.length === 2 ? `${cells[0]}: ${cells[1]}` : cells.join('  |  ');
-      wrapPdfText(text, 96).forEach(part => output.push({ text:part, kind:'table' }));
-      return;
-    }
-    wrapPdfText(cleanMarkdownText(line), 94).forEach(text => output.push({ text, kind:'body' }));
-  });
-  return output;
+function wrapPdfTextByWidth(text, width, size = 8.5, bold = false) {
+  const avg = size * (bold ? .56 : .51);
+  return wrapPdfText(cleanMarkdownText(text), Math.max(8, Math.floor(width / avg)));
 }
 
 function winAnsiHex(text) {
@@ -739,48 +844,233 @@ function winAnsiHex(text) {
   return hex;
 }
 
-function pdfTextOp(text, x, y, size = 9, bold = false, purple = false) {
-  const color = purple ? '0.31 0.086 0.722 rg' : '0.12 0.13 0.15 rg';
-  return `BT /${bold ? 'F2' : 'F1'} ${size} Tf ${color} ${x} ${y} Td <${winAnsiHex(text)}> Tj ET\n`;
+function pdfTextOp(text, x, y, size = 9, bold = false, color = [0.12, 0.13, 0.15]) {
+  return `BT /${bold ? 'F2' : 'F1'} ${size} Tf ${color.join(' ')} rg ${x.toFixed(2)} ${y.toFixed(2)} Td <${winAnsiHex(text)}> Tj ET\n`;
+}
+
+function pdfRoundedRectOp(x, y, width, height, radius = 8, { fill = [1,1,1], stroke = [.87,.87,.89], lineWidth = .7 } = {}) {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  const k = .5522847498;
+  const x2 = x + width;
+  const y2 = y + height;
+  return `q ${fill.join(' ')} rg ${stroke.join(' ')} RG ${lineWidth} w ` +
+    `${(x+r).toFixed(2)} ${y.toFixed(2)} m ${(x2-r).toFixed(2)} ${y.toFixed(2)} l ` +
+    `${(x2-r+k*r).toFixed(2)} ${y.toFixed(2)} ${x2.toFixed(2)} ${(y+r-k*r).toFixed(2)} ${x2.toFixed(2)} ${(y+r).toFixed(2)} c ` +
+    `${x2.toFixed(2)} ${(y2-r).toFixed(2)} l ${x2.toFixed(2)} ${(y2-r+k*r).toFixed(2)} ${(x2-r+k*r).toFixed(2)} ${y2.toFixed(2)} ${(x2-r).toFixed(2)} ${y2.toFixed(2)} c ` +
+    `${(x+r).toFixed(2)} ${y2.toFixed(2)} l ${(x+r-k*r).toFixed(2)} ${y2.toFixed(2)} ${x.toFixed(2)} ${(y2-r+k*r).toFixed(2)} ${x.toFixed(2)} ${(y2-r).toFixed(2)} c ` +
+    `${x.toFixed(2)} ${(y+r).toFixed(2)} l ${x.toFixed(2)} ${(y+r-k*r).toFixed(2)} ${(x+r-k*r).toFixed(2)} ${y.toFixed(2)} ${(x+r).toFixed(2)} ${y.toFixed(2)} c B Q\n`;
+}
+
+function pdfLineOp(x1, y1, x2, y2, color = [.88,.88,.9], width = .6) {
+  return `q ${color.join(' ')} RG ${width} w ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S Q\n`;
 }
 
 function markdownPdfBlob(markdown, { title, version } = {}) {
-  const tokens = markdownToPdfLines(markdown);
+  const doc = parseSnapshotMarkdown(markdown);
+  const PAGE_W = 595.28;
+  const PAGE_H = 841.89;
+  const MARGIN_X = 30;
+  const CONTENT_W = PAGE_W - MARGIN_X * 2;
+  const TOP_START = 88;
+  const BOTTOM_LIMIT = 54;
+  const purple = [.31,.086,.722];
+  const text = [.08,.08,.1];
+  const muted = [.39,.40,.44];
+  const border = [.86,.86,.88];
+  const lavender = [.972,.958,.995];
+  const pageBg = [.985,.985,.989];
+  const white = [1,1,1];
   const pages = [];
-  let page = [];
-  let y = 758;
-  const style = token => {
-    if (token.kind === 'h1') return { size:16, bold:true, purple:true, gap:23 };
-    if (token.kind === 'h2') return { size:12, bold:true, purple:true, gap:18 };
-    if (token.kind === 'h3') return { size:10.5, bold:true, purple:false, gap:16 };
-    if (token.kind === 'table') return { size:8.2, bold:false, purple:false, gap:12 };
-    if (token.kind === 'blank') return { size:8, bold:false, purple:false, gap:8 };
-    return { size:9, bold:false, purple:false, gap:13 };
-  };
-  tokens.forEach(token => {
-    const st = style(token);
-    if (y - st.gap < 62) { pages.push(page); page = []; y = 758; }
-    page.push({ ...token, y, ...st });
-    y -= st.gap;
+  let stream = '';
+  let top = TOP_START;
+
+  const pageY = (topValue, height = 0) => PAGE_H - topValue - height;
+
+  function startPage() {
+    stream = `q ${pageBg.join(' ')} rg 0 0 ${PAGE_W} ${PAGE_H} re f Q\n`;
+    stream += `q ${purple.join(' ')} rg ${MARGIN_X} ${(PAGE_H - 26).toFixed(2)} ${CONTENT_W} 2 re f Q\n`;
+    stream += pdfTextOp('DOCUMENTO DA F4', MARGIN_X, PAGE_H - 45, 7.2, true, purple);
+    const headerTitle = title || doc.title || 'F4';
+    const headerLines = wrapPdfTextByWidth(headerTitle, 350, 11.5, true).slice(0, 2);
+    headerLines.forEach((line, index) => { stream += pdfTextOp(line, MARGIN_X, PAGE_H - 61 - index * 13, 11.5, true, text); });
+    const displayVersion = version || doc.meta['Versão'] || '—';
+    const pillW = 103;
+    const pillH = 24;
+    stream += pdfRoundedRectOp(PAGE_W - MARGIN_X - pillW, PAGE_H - 67, pillW, pillH, 12, { fill: lavender, stroke: [.82,.75,.95], lineWidth: .7 });
+    stream += pdfTextOp(`VERSÃO ${displayVersion}`, PAGE_W - MARGIN_X - pillW + 12, PAGE_H - 53, 7.4, true, purple);
+    top = TOP_START;
+  }
+
+  function finishPage() {
+    pages.push(stream);
+  }
+
+  function newPage() {
+    finishPage();
+    startPage();
+  }
+
+  function ensureSpace(height) {
+    if (top + height > PAGE_H - BOTTOM_LIMIT) newPage();
+  }
+
+  function drawSectionHeader(sectionTitle) {
+    const [kicker, heading, description] = pdfSectionDesign[sectionTitle] || ['INFORMAÇÕES DA F4', sectionTitle, 'Informações registradas nesta seção da F4.'];
+    const descLines = wrapPdfTextByWidth(description, CONTENT_W - 28, 7.8, false);
+    const height = 52 + Math.max(0, descLines.length - 1) * 9;
+    ensureSpace(height + 8);
+    const y = pageY(top, height);
+    stream += pdfRoundedRectOp(MARGIN_X, y, CONTENT_W, height, 9, { fill: white, stroke: border, lineWidth: .7 });
+    stream += pdfTextOp(kicker, MARGIN_X + 14, PAGE_H - top - 14, 6.8, true, purple);
+    stream += pdfTextOp(heading, MARGIN_X + 14, PAGE_H - top - 30, 12.2, true, text);
+    descLines.forEach((line, index) => { stream += pdfTextOp(line, MARGIN_X + 14, PAGE_H - top - 43 - index * 9, 7.8, false, muted); });
+    top += height + 6;
+  }
+
+  const wideLabels = new Set(['descrição','causa da modificação','causa detalhada da modificação','observações','condição anterior','condição proposta','escopos']);
+
+  function drawFieldCell(field, x, cellTop, width, height) {
+    const y = pageY(cellTop, height);
+    stream += pdfRoundedRectOp(x, y, width, height, 0, { fill: white, stroke: border, lineWidth: .55 });
+    if (!field?.label && !field?.value) return;
+    const label = cleanMarkdownText(field.label || '').toUpperCase();
+    if (label) stream += pdfTextOp(label, x + 10, PAGE_H - cellTop - 14, 6.2, false, muted);
+    const valueLines = wrapPdfTextByWidth(field.value || '—', width - 20, 8.4, true);
+    valueLines.forEach((line, index) => { stream += pdfTextOp(line, x + 10, PAGE_H - cellTop - 31 - index * 10, 8.4, true, text); });
+  }
+
+  function fieldHeight(field, width) {
+    const lines = wrapPdfTextByWidth(field.value || '—', width - 20, 8.4, true);
+    return Math.max(50, 37 + Math.max(1, lines.length) * 10);
+  }
+
+  function drawFields(fields) {
+    const gap = 0;
+    const half = (CONTENT_W - gap) / 2;
+    let pending = null;
+
+    const flushPending = () => {
+      if (!pending) return;
+      const h = fieldHeight(pending, half);
+      ensureSpace(h + 1);
+      drawFieldCell(pending, MARGIN_X, top, half, h);
+      drawFieldCell({ label:'', value:'' }, MARGIN_X + half, top, half, h);
+      top += h;
+      pending = null;
+    };
+
+    fields.forEach(field => {
+      const isWide = wideLabels.has(normalize(field.label));
+      if (isWide) {
+        flushPending();
+        const h = fieldHeight(field, CONTENT_W);
+        ensureSpace(h + 1);
+        drawFieldCell(field, MARGIN_X, top, CONTENT_W, h);
+        top += h;
+        return;
+      }
+      if (!pending) { pending = field; return; }
+      const h = Math.max(fieldHeight(pending, half), fieldHeight(field, half));
+      ensureSpace(h + 1);
+      drawFieldCell(pending, MARGIN_X, top, half, h);
+      drawFieldCell(field, MARGIN_X + half, top, half, h);
+      top += h;
+      pending = null;
+    });
+    flushPending();
+    top += 8;
+  }
+
+  function drawSubheading(label) {
+    ensureSpace(34);
+    stream += pdfTextOp(label, MARGIN_X + 2, PAGE_H - top - 12, 9.2, true, text);
+    stream += pdfLineOp(MARGIN_X, PAGE_H - top - 20, MARGIN_X + CONTENT_W, PAGE_H - top - 20, border, .6);
+    top += 30;
+  }
+
+  function tableColumnWidths(headers) {
+    const min = 54;
+    const raw = headers.map(header => Math.max(7, Math.min(18, cleanMarkdownText(header).length)));
+    const total = raw.reduce((a,b) => a+b, 0) || 1;
+    let widths = raw.map(weight => Math.max(min, CONTENT_W * weight / total));
+    const sum = widths.reduce((a,b)=>a+b,0);
+    widths = widths.map(width => width * CONTENT_W / sum);
+    return widths;
+  }
+
+  function drawTable(table) {
+    const headers = table.headers || [];
+    const rows = table.rows || [];
+    if (!headers.length) return;
+    const widths = tableColumnWidths(headers);
+    const headerH = 28;
+
+    const drawHeader = () => {
+      ensureSpace(headerH + 2);
+      let x = MARGIN_X;
+      headers.forEach((header, index) => {
+        const w = widths[index];
+        const y = pageY(top, headerH);
+        stream += pdfRoundedRectOp(x, y, w, headerH, 0, { fill: lavender, stroke: border, lineWidth: .55 });
+        const lines = wrapPdfTextByWidth(header, w - 12, 6.3, true).slice(0, 2);
+        lines.forEach((line, lineIndex) => { stream += pdfTextOp(line.toUpperCase(), x + 6, PAGE_H - top - 11 - lineIndex * 8, 6.3, true, muted); });
+        x += w;
+      });
+      top += headerH;
+    };
+
+    drawHeader();
+    rows.forEach(row => {
+      const lineSets = row.map((cell, index) => wrapPdfTextByWidth(cell || '—', widths[index] - 12, 6.8, false));
+      const rowH = Math.max(28, 14 + Math.max(...lineSets.map(lines => lines.length), 1) * 8.2);
+      if (top + rowH > PAGE_H - BOTTOM_LIMIT) {
+        newPage();
+        drawHeader();
+      }
+      let x = MARGIN_X;
+      row.forEach((cell, index) => {
+        const w = widths[index];
+        const y = pageY(top, rowH);
+        stream += pdfRoundedRectOp(x, y, w, rowH, 0, { fill: white, stroke: border, lineWidth: .5 });
+        lineSets[index].forEach((line, lineIndex) => { stream += pdfTextOp(line, x + 6, PAGE_H - top - 13 - lineIndex * 8.2, 6.8, false, text); });
+        x += w;
+      });
+      top += rowH;
+    });
+    top += 9;
+  }
+
+  startPage();
+
+  doc.sections.forEach(section => {
+    drawSectionHeader(section.title);
+    (section.blocks || []).forEach(block => {
+      if (block.type === 'fields') drawFields(block.fields || []);
+      if (block.type === 'table') drawTable(block);
+    });
+    (section.subsections || []).forEach(sub => {
+      drawSubheading(sub.title);
+      (sub.blocks || []).forEach(block => {
+        if (block.type === 'fields') drawFields(block.fields || []);
+        if (block.type === 'table') drawTable(block);
+      });
+    });
+    top += 8;
   });
-  if (page.length || !pages.length) pages.push(page);
+
+  finishPage();
 
   const objects = [null, '', '',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'
   ];
   const pageIds = [];
-  pages.forEach((items, pageIndex) => {
-    let stream = 'q\n0.31 0.086 0.722 rg\n42 799 511 2 re f\nQ\n';
-    stream += pdfTextOp(title || 'F4', 42, 812, 11, true, false);
-    stream += pdfTextOp(`Versão ${version || '—'} · Página ${pageIndex + 1} de ${pages.length}`, 365, 812, 8, false, false);
-    items.forEach(item => {
-      if (!item.text) return;
-      stream += pdfTextOp(item.text, 42, item.y, item.size, item.bold, item.purple);
-    });
-    stream += pdfTextOp('Documento gerado a partir do snapshot interno em Markdown.', 42, 28, 7.5, false, false);
-    const contentId = objects.push(`<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}endstream`) - 1;
-    const pageId = objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`) - 1;
+  pages.forEach((pageStream, pageIndex) => {
+    let pageContent = pageStream;
+    pageContent += pdfTextOp(`F4 ${String(doc.title || '').replace(/^F4\s+/i, '').split(' - ')[0] || ''}`, MARGIN_X, 28, 6.8, false, muted);
+    pageContent += pdfTextOp(`Página ${pageIndex + 1} de ${pages.length}`, PAGE_W - MARGIN_X - 70, 28, 6.8, false, muted);
+    const contentId = objects.push(`<< /Length ${new TextEncoder().encode(pageContent).length} >>\nstream\n${pageContent}endstream`) - 1;
+    const pageId = objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`) - 1;
     pageIds.push(pageId);
   });
   objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
@@ -812,21 +1102,55 @@ function downloadHistoryPdf(snapshotId) {
   downloadBlob(`${code}_v${entry.version}_${safeLabel}.pdf`, blob);
 }
 
-const editableFields = [
-  ['request.title','Título','text'], ['request.description','Descrição','textarea'], ['request.changeCause','Causa detalhada da modificação','textarea'],
-  ['request.vehicles','Veículos / órgãos','text'], ['request.changeOrigin','Origem da modificação','text'], ['request.scoppId','SCOPP Dev GAP ECO ID','text'], ['request.lupNumber','Número LUP','text'],
-  ['supplier.manager','Supplier F4 Manager','text'], ['supplier.plant','Supplier Plant','text'], ['supplier.leadTime','Implementation Leadtime','text'],
-  ['impact.currency','Moeda da oferta','text'], ['impact.units','Unidade','text'], ['impact.technicalValues.0.value','Impacto técnico principal','number'],
-  ['impact.toolingAmount','Valor de ferramental','number'], ['impact.setAmount','Valor SET','number'], ['impact.massProductionAmount','PDS Mass Production','number'],
-  ['impact.aftersalesAmount','PDS Aftersales','number'], ['impact.packagingAmount','Embalagem específica','number'], ['impact.annualVolume','Volume médio anual','number'],
-  ['partPrice.weightImpact','Impacto no peso (g)','number'], ['partPrice.material','Material','number'], ['partPrice.direct','Custo direto','number'], ['partPrice.indirect','Custo indireto','number'],
-  ['partPrice.general','Custos gerais + margem','number'], ['partPrice.packaging','Embalagem da peça','number'], ['tooling.idoReference','Referência IDO','text'],
-  ['set.amortizationQuantity','Quantidade de amortização','number'], ['set.estimatedDuration','Duração estimada','text'], ['set.financialFeeRate','Taxa financeira (%)','number'],
-  ['set.financialFeeAmount','Custos financeiros','number'], ['set.tokenAmount','Token','number'], ['set.amortizedPackaging','Embalagem específica amortizada','number'],
-  ['references.0.current','Referência atual principal','text'], ['references.0.newRef','Nova referência principal','text'], ['references.0.notes','Observação da referência','text'],
-  ['beforeAfter.before','Condição anterior','textarea'], ['beforeAfter.after','Condição proposta','textarea'], ['capacity.previous','Capacidade anterior','number'], ['capacity.next','Nova capacidade','number'],
-  ['doa.notes','Observações DOA','textarea']
-];
+const SECTION_EDIT_FIELDS = {
+  solicitacao: [
+    ['request.title','Título da modificação','text'], ['request.description','Descrição','textarea'], ['request.changeCause','Causa detalhada da modificação','textarea'],
+    ['request.vehicles','Veículos / órgãos','text'], ['request.changeOrigin','Origem da modificação','text'], ['request.scoppId','SCOPP Dev GAP ECO ID','text'],
+    ['request.multidisciplinary','F4 multidisciplinar','text'], ['request.lupNumber','Número LUP','text'], ['request.setPayment','Modo de pagamento SET','text'],
+    ['request.customerQualityLup','LUP de qualidade do cliente (QC)','text']
+  ],
+  fornecedor: [
+    ['supplier.manager','Supplier F4 Manager','text'], ['supplier.plant','Supplier Plant','text'], ['supplier.position','Position','text'],
+    ['supplier.alcor','Supplier Account (ALCOR)','text'], ['supplier.setAccount','Supplier Account for SET Order','text'], ['supplier.leadTime','Implementation Leadtime','text'],
+    ['supplier.diversity','Diversidade','text']
+  ],
+  impactos: [
+    ['impact.currency','Moeda da oferta','text'], ['impact.units','Unidade','text'], ['impact.technicalValues.0.value','Impacto técnico principal','number'],
+    ['impact.toolingAmount','Valor de ferramental','number'], ['impact.setAmount','Valor SET','number'], ['impact.massProductionAmount','PDS Mass Production','number'],
+    ['impact.aftersalesAmount','PDS Aftersales','number'], ['impact.packagingAmount','Embalagem específica','number'], ['impact.annualVolume','Volume médio anual','number']
+  ],
+  preco: [
+    ['partPrice.csrImpact','CSR Impact','text'], ['partPrice.weightImpact','Impacto no peso (g)','number'], ['partPrice.material','Material','number'],
+    ['partPrice.direct','Custo direto','number'], ['partPrice.indirect','Custo indireto','number'], ['partPrice.general','Custos gerais + margem','number'],
+    ['partPrice.packaging','Embalagem da peça','number']
+  ],
+  'ferramental-set': [
+    ['tooling.idoReference','Referência IDO','text'], ['impact.toolingAmount','Valor de ferramental','number'], ['impact.setAmount','Valor SET','number'],
+    ['set.amortizationQuantity','Quantidade de amortização','number'], ['set.estimatedDuration','Duração estimada','text'], ['set.financialFeeRate','Taxa financeira (%)','number'],
+    ['set.financialFeeAmount','Custos financeiros','number'], ['set.tokenAmount','Token','number'], ['set.amortizedPackaging','Embalagem específica amortizada','number']
+  ],
+  referencias: [
+    ['references.0.current','Referência atual principal','text'], ['references.0.newRef','Nova referência principal','text'], ['references.0.partImpact','Impacto da referência principal','number'],
+    ['references.0.tokenImpact','Impacto SET Token','number'], ['references.0.notes','Observação da referência principal','textarea'],
+    ['references.1.current','Segunda referência atual','text'], ['references.1.newRef','Segunda nova referência','text'], ['references.1.notes','Observação da segunda referência','textarea']
+  ],
+  documentos: [
+    ['beforeAfter.before','Condição anterior','textarea'], ['beforeAfter.after','Condição proposta','textarea']
+  ],
+  capacidade: [
+    ['capacity.previous','Capacidade anterior','number'], ['capacity.next','Nova capacidade','number']
+  ],
+  doa: [
+    ['doa.partUsage','Uso da peça','text'], ['doa.notes','Observações DOA','textarea']
+  ]
+};
+
+const SECTION_TITLES = {
+  solicitacao:'Solicitação', fornecedor:'Fornecedor', impactos:'Impactos', preco:'Preço da peça',
+  'ferramental-set':'Ferramental / SET', referencias:'Referências', documentos:'Antes / depois', capacidade:'Capacidade', doa:'DOA', metadados:'Metadados'
+};
+
+const editableFields = Object.values(SECTION_EDIT_FIELDS).flat();
 
 function getPathValue(source, path) {
   return path.split('.').reduce((value, key) => value?.[Number.isInteger(Number(key)) && String(Number(key)) === key ? Number(key) : key], source);
@@ -844,60 +1168,105 @@ function setPathValue(target, path, value) {
     cursor = cursor[actual];
   });
 }
+function cloneValue(value) {
+  if (value === undefined) return undefined;
+  return JSON.parse(JSON.stringify(value));
+}
 function canEditContent() {
-  return profile.id === 'supplier' && ['creation','supplier'].includes(f4.currentStep) && f4.status !== 'Aprovada';
+  return profile.id === 'supplier'
+    && f4.currentStep === 'supplier'
+    && ['Devolvida','Rejeitada','Rascunho'].includes(f4.status)
+    && f4.returnedToProfile === 'supplier'
+    && !!f4.returnOrigin;
 }
 
-let editExpanded = false;
-function contentEditorPanel() {
-  if (!canEditContent() || !editExpanded) return '';
+let editingSectionId = null;
+
+function visibleChangeSummary() {
+  if (profile.id === 'supplier' && canEditContent()) return f4.pendingReviewChanges || {};
+  return f4.lastSubmittedChanges || {};
+}
+function sectionChangeInfo(sectionId) {
+  return visibleChangeSummary()?.[sectionId] || null;
+}
+function sectionChangedCount(sectionId) {
+  const info = sectionChangeInfo(sectionId);
+  return Array.isArray(info?.changes) ? info.changes.length : Array.isArray(info?.changedFields) ? info.changedFields.length : 0;
+}
+function pencilIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.9 3.4a2.1 2.1 0 0 1 3 3L9.2 17.1l-4.2 1 1-4.2L16.9 3.4Zm-9.4 11.2-.5 1.8 1.8-.5 8.8-8.8-1.3-1.3-8.8 8.8Z"/></svg>`;
+}
+function sectionEditButton(sectionId) {
+  if (!canEditContent() || !SECTION_EDIT_FIELDS[sectionId]?.length) return '';
+  const active = editingSectionId === sectionId;
+  return `<button class="section-edit-button ${active ? 'is-active' : ''}" type="button" data-edit-section="${esc(sectionId)}" aria-label="${active ? 'Fechar edição' : 'Editar'} ${esc(SECTION_TITLES[sectionId] || sectionId)}" title="${active ? 'Fechar edição' : 'Editar esta seção'}">${pencilIcon()}</button>`;
+}
+function sectionEditorPanel(sectionId) {
+  if (!canEditContent() || editingSectionId !== sectionId) return '';
   const d = getReviewData(f4);
-  const controls = editableFields.map(([path,label,type]) => {
+  const controls = (SECTION_EDIT_FIELDS[sectionId] || []).map(([path,label,type]) => {
     const value = getPathValue(d, path) ?? '';
     const control = type === 'textarea'
       ? `<textarea name="${esc(path)}" rows="3">${esc(value)}</textarea>`
       : `<input name="${esc(path)}" type="${type}" ${type === 'number' ? 'step="0.001"' : ''} value="${esc(value)}">`;
-    return `<label class="content-edit-field ${type === 'textarea' ? 'is-wide' : ''}"><span>${esc(label)}</span>${control}</label>`;
+    return `<label class="section-edit-field ${type === 'textarea' ? 'is-wide' : ''}"><span>${esc(label)}</span>${control}</label>`;
   }).join('');
-  return `<section class="card detail-card content-editor" id="contentEditorPanel">
-    <div class="detail-section-heading"><div><p class="detail-kicker">Edição controlada</p><h3>Editar conteúdo da F4</h3><p>Somente mudanças efetivas nos dados abaixo geram uma nova versão. Comentários e alterações de fluxo permanecem na versão atual.</p></div><span class="version-chip">Versão atual ${currentVersion()}</span></div>
-    <form id="contentEditForm"><div class="content-edit-grid">${controls}</div><div class="content-edit-footer"><span>Ao salvar uma alteração real, a próxima versão será ${incrementVersion(currentVersion())}.</span><div><button type="button" class="secondary-edit-button" id="cancelContentEdit">Cancelar</button><button type="submit" class="primary-edit-button">Salvar nova versão</button></div></div></form>
-  </section>`;
+  return `<form class="section-edit-form" data-edit-form="${esc(sectionId)}">
+    <div class="section-edit-intro"><div><strong>Editar ${esc(SECTION_TITLES[sectionId] || sectionId)}</strong><span>Altere somente os campos necessários. Ao salvar uma mudança real será criada a próxima versão da F4.</span></div><span class="version-chip">${currentVersion()} → ${incrementVersion(currentVersion())}</span></div>
+    <div class="section-edit-grid">${controls}</div>
+    <div class="section-edit-footer"><button class="secondary-edit-button" type="button" data-cancel-section-edit>Cancelar</button><button class="primary-edit-button" type="submit">Salvar alterações desta seção</button></div>
+  </form>`;
 }
-
-function saveContentEdition(form) {
-  const requiredTitle = form.elements['request.title']?.value.trim();
-  const requiredDescription = form.elements['request.description']?.value.trim();
-  if (!requiredTitle || !requiredDescription) {
-    showToast('Título e descrição não podem ficar vazios.');
-    (!requiredTitle ? form.elements['request.title'] : form.elements['request.description'])?.focus();
-    return false;
-  }
+function mergePendingSectionChanges(sectionId, newChanges, version) {
+  const pending = cloneValue(f4.pendingReviewChanges || {}) || {};
+  const existing = pending[sectionId] || { sectionId, sectionTitle: SECTION_TITLES[sectionId] || sectionId, changes: [] };
+  const byPath = new Map((existing.changes || []).map(change => [change.path, change]));
+  newChanges.forEach(change => {
+    const previous = byPath.get(change.path);
+    byPath.set(change.path, previous ? { ...change, before: previous.before } : change);
+  });
+  pending[sectionId] = {
+    ...existing,
+    version,
+    changedAt: new Date().toISOString(),
+    changes: [...byPath.values()],
+    changedFields: [...byPath.values()].map(change => change.label)
+  };
+  f4.pendingReviewChanges = pending;
+}
+function saveSectionEdition(form, sectionId) {
+  const fields = SECTION_EDIT_FIELDS[sectionId] || [];
+  if (!fields.length) return false;
   const before = getReviewData(f4);
-  const changed = [];
-  f4.contentOverrides = f4.contentOverrides || {};
-  editableFields.forEach(([path,label,type]) => {
+  const staged = [];
+  fields.forEach(([path,label,type]) => {
     const field = form.elements[path];
     if (!field) return;
     const value = type === 'number' ? number(field.value) : field.value.trim();
     const previous = getPathValue(before, path);
     const same = type === 'number' ? number(previous) === value : String(previous ?? '') === String(value ?? '');
-    if (same) return;
-    setPathValue(f4.contentOverrides, path, value);
-    changed.push(label);
-    if (path === 'request.title') f4.title = value;
-    if (path === 'request.description') f4.description = value;
+    if (!same) staged.push({ path, label, type, before: previous, after: value });
   });
-  if (!changed.length) {
-    showToast('Nenhuma alteração de conteúdo foi identificada. A versão foi mantida.');
+  if (!staged.length) {
+    showToast('Nenhuma alteração foi identificada nesta seção.');
     return false;
   }
-  if ((f4.activeSignatures || []).length) invalidateCurrentApprovals('Conteúdo da F4 alterado.');
+  const titleChange = staged.find(change => change.path === 'request.title');
+  const descriptionChange = staged.find(change => change.path === 'request.description');
+  if (titleChange && !String(titleChange.after).trim()) return showToast('O título da F4 não pode ficar vazio.'), false;
+  if (descriptionChange && !String(descriptionChange.after).trim()) return showToast('A descrição da F4 não pode ficar vazia.'), false;
+
+  f4.contentOverrides = f4.contentOverrides || {};
+  staged.forEach(change => {
+    setPathValue(f4.contentOverrides, change.path, change.after);
+    if (change.path === 'request.title') f4.title = change.after;
+    if (change.path === 'request.description') f4.description = change.after;
+  });
+  if ((f4.activeSignatures || []).length) invalidateCurrentApprovals('Conteúdo da F4 alterado pelo fornecedor.');
   const version = incrementVersion(currentVersion());
   f4.currentVersion = version;
   const now = new Date().toISOString();
-  const wasRejected = f4.status === 'Rejeitada';
-  if (wasRejected) {
+  if (f4.status === 'Rejeitada') {
     f4.status = 'Rascunho';
     f4.stage = 'Nova versão em correção';
     f4.currentStep = 'supplier';
@@ -907,9 +1276,13 @@ function saveContentEdition(form) {
     f4.sector = 'Fornecedor';
     f4.currentAssigneeSince = now;
   }
+  mergePendingSectionChanges(sectionId, staged, version);
   appendHistory({
-    step:'supplier', label:'Conteúdo da F4 alterado', date:now, status:f4.status, newStatus:f4.status,
-    by:profile.name, sector:'Fornecedor', description:`Campos alterados: ${changed.join(', ')}.`, contentChange:true, changedFields:changed, version
+    step:'supplier', label:`Conteúdo alterado — ${SECTION_TITLES[sectionId] || sectionId}`, date:now,
+    status:f4.status, newStatus:f4.status, by:profile.name, sector:'Fornecedor',
+    description:`${staged.length} campo${staged.length === 1 ? '' : 's'} alterado${staged.length === 1 ? '' : 's'} nesta seção.`,
+    contentChange:true, changedFields:staged.map(change => change.label), changeDetails:staged,
+    sectionId, version
   });
   f4.updatedAt = now.slice(0,10);
   createVersionSnapshot(version, { createdBy: profile.name });
@@ -917,8 +1290,16 @@ function saveContentEdition(form) {
   return true;
 }
 
-function printableField(label, value) {
-  return `<div class="pdf-field"><span>${esc(label)}</span><strong>${esc(value ?? '—')}</strong></div>`;
+function contentEditorPanel() { return ''; }
+
+function printableField(label, value, { wide = false } = {}) {
+  return `<div class="pdf-field ${wide ? 'is-wide' : ''}"><span>${esc(label)}</span><strong>${esc(value ?? '—')}</strong></div>`;
+}
+function printableSection(kicker, title, description, body) {
+  return `<section class="section-card"><div class="section-head"><p>${esc(kicker)}</p><h2>${esc(title)}</h2><span>${esc(description)}</span></div>${body}</section>`;
+}
+function printableTable(headers, rows) {
+  return `<div class="pdf-table-wrap"><table class="pdf-table"><thead><tr>${headers.map(header => `<th>${esc(header)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${esc(cell ?? '—')}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}">Nenhuma informação registrada.</td></tr>`}</tbody></table></div>`;
 }
 function signatureCard(signature) {
   const logoUrl = new URL('../../assets/images/logo-renault.png', import.meta.url).href;
@@ -930,17 +1311,76 @@ function openFinalPdf() {
   if (!win) return showToast('Permita pop-ups para gerar o PDF final.');
   const d = getReviewData(f4);
   const signatures = f4.finalSignatures || [];
-  const refs = (d.references || []).map(ref => `<tr><td>${esc(ref.current)}</td><td>${esc(ref.newRef)}</td><td>${esc(ref.notes)}</td></tr>`).join('');
+  const technicalValues = (d.impact.technicalValues || []).map(item => `${item.currency} ${item.value}`).join(' / ') || '—';
+  const setRows = (d.set.rows || []).map(row => [row[0], row[1], row[2], row[3], number(row[2]) * number(row[3])]);
+  const refs = (d.references || []).map(ref => [ref.current, ref.newRef, ref.lastPrice, ref.partImpact, ref.tokenImpact, ref.notes]);
+
+  const sections = [
+    printableSection('DADOS DA F4', 'Solicitação e contexto da modificação', 'Informações que explicam o que está sendo alterado e por quê.', `<div class="pdf-grid">
+      ${printableField('Título da modificação', d.request.title, { wide:true })}${printableField('Descrição', d.request.description, { wide:true })}
+      ${printableField('Causa detalhada da modificação', d.request.changeCause, { wide:true })}${printableField('Veículos / órgãos', d.request.vehicles)}
+      ${printableField('Origem da modificação', d.request.changeOrigin)}${printableField('SCOPP Dev GAP ECO ID', d.request.scoppId)}
+      ${printableField('F4 multidisciplinar', d.request.multidisciplinary)}${printableField('Número LUP', d.request.lupNumber)}
+      ${printableField('Modo de pagamento SET', d.request.setPayment)}${printableField('LUP de qualidade do cliente (QC)', d.request.customerQualityLup)}
+    </div>`),
+    printableSection('INFORMAÇÕES DO FORNECEDOR', 'Dados do fornecedor e identificação da proposta', 'Dados usados para identificar o responsável pela F4 e as condições de implementação.', `<div class="pdf-grid">
+      ${printableField('Corporate Name', d.supplier.corporateName)}${printableField('F4 Version', d.supplier.version)}
+      ${printableField('Supplier F4 Manager', d.supplier.manager)}${printableField('Supplier Plant', d.supplier.plant)}
+      ${printableField('Date', d.supplier.date)}${printableField('Position', d.supplier.position)}
+      ${printableField('Supplier Account (ALCOR)', d.supplier.alcor)}${printableField('Supplier Account for SET Order', d.supplier.setAccount)}
+      ${printableField('Implementation Leadtime', d.supplier.leadTime)}${printableField('Diversidade', d.supplier.diversity)}
+    </div>`),
+    printableSection('IMPACTOS DA F4', 'Síntese econômica e impactos', 'Valores consolidados usados nas análises comercial, técnica e financeira.', `<div class="pdf-grid">
+      ${printableField('Moeda da oferta', d.impact.currency)}${printableField('Unidade', d.impact.units)}
+      ${printableField('Impacto técnico', d.impact.technicalImpact)}${printableField('Valores técnicos', technicalValues)}
+      ${printableField('Ferramental', `${d.impact.toolingImpact} - ${d.impact.toolingAmount}`)}${printableField('SET', `${d.impact.setImpact} - ${d.impact.setAmount}`)}
+      ${printableField('Produção em série', `${d.impact.massProductionImpact} - ${d.impact.massProductionAmount}`)}${printableField('Pós-venda', `${d.impact.aftersalesImpact} - ${d.impact.aftersalesAmount}`)}
+      ${printableField('Embalagem específica', `${d.impact.packagingImpact} - ${d.impact.packagingAmount}`)}${printableField('Volume médio anual', d.impact.annualVolume)}
+      ${printableField('Impacto unitário', d.impact.unitImpact)}${printableField('Impacto anual', d.impact.annualImpact)}${printableField('Custos iniciais', d.impact.initialCosts)}
+    </div>`),
+    printableSection('PREÇO DA PEÇA', 'Composição detalhada do preço', 'Detalhamento dos componentes econômicos considerados na proposta.', `<div class="pdf-grid">
+      ${printableField('CSR Impact', d.partPrice.csrImpact)}${printableField('Impacto no peso (g)', d.partPrice.weightImpact)}
+      ${printableField('Material', d.partPrice.material)}${printableField('Custo direto', d.partPrice.direct)}
+      ${printableField('Custo indireto', d.partPrice.indirect)}${printableField('Custos gerais + margem', d.partPrice.general)}
+      ${printableField('Embalagem', d.partPrice.packaging)}${printableField('Total', d.partPrice.total)}
+    </div>`),
+    printableSection('CUSTOS INICIAIS', 'Ferramental, SET e amortização', 'Detalhes usados para validar ferramental, serviços de engenharia e condições financeiras.', `<div class="pdf-grid">
+      ${printableField('Referência IDO', d.tooling.idoReference)}${printableField('Valor de ferramental', d.tooling.amount)}
+      ${printableField('SET calculado', d.set.calculated)}${printableField('SET declarado', d.set.declared)}
+      ${printableField('Quantidade de amortização', d.set.amortizationQuantity)}${printableField('Duração estimada', d.set.estimatedDuration)}
+      ${printableField('Taxa financeira', d.set.financialFeeRate)}${printableField('Custos financeiros', d.set.financialFeeAmount)}
+      ${printableField('Token', d.set.tokenAmount)}${printableField('Embalagem amortizada', d.set.amortizedPackaging)}
+    </div><h3 class="subsection-title">SET - detalhamento dos custos</h3>${printableTable(['Seção','Descrição','Qtd.','Custo unitário','Total'], setRows)}`),
+    printableSection('REFERÊNCIAS', 'Referências impactadas pela modificação', 'Relação entre referências atuais, novas referências e seus respectivos impactos.', printableTable(['Referência atual','Nova referência','Último preço','Impacto peça','Impacto Token','Observações'], refs)),
+    printableSection('COMPARATIVO', 'Condição antes e depois', 'Registro da condição atual e da condição proposta para implementação.', `<div class="pdf-grid">
+      ${printableField('Condição anterior', d.beforeAfter.before, { wide:true })}${printableField('Condição proposta', d.beforeAfter.after, { wide:true })}
+      ${printableField('Anexos anteriores', (d.beforeAfter.beforeFiles || []).join(', '), { wide:true })}${printableField('Anexos propostos', (d.beforeAfter.afterFiles || []).join(', '), { wide:true })}
+    </div>`),
+    printableSection('CAPACIDADE PRODUTIVA', 'Impacto de capacidade', 'Comparativo de capacidade antes e depois da implementação da F4.', `<div class="pdf-grid">
+      ${printableField('Capacidade anterior', d.capacity.previous)}${printableField('Nova capacidade', d.capacity.next)}
+      ${printableField('Variação', d.capacity.delta)}${printableField('Variação percentual', `${number(d.capacity.percent).toFixed(2)}%`)}
+    </div>`),
+    printableSection('ALÇADAS E APROVAÇÕES', 'DOA e níveis de decisão', 'Informações utilizadas para determinar os níveis de aprovação necessários.', `<div class="pdf-grid">
+      ${printableField('Uso da peça', d.doa.partUsage)}${printableField('Escopos', Array.isArray(d.doa.scopes) ? d.doa.scopes.join(', ') : d.doa.scopes, { wide:true })}
+      ${printableField('Custos iniciais', d.doa.initialCosts)}${printableField('Nível custos iniciais', d.doa.initialDoa)}
+      ${printableField('Impacto anual', d.doa.annualImpact)}${printableField('Nível FYI', d.doa.annualDoa)}
+      ${printableField('Observações', d.doa.notes, { wide:true })}
+    </div>`),
+    printableSection('RASTREABILIDADE', 'Metadados da F4', 'Informações de identificação, versão, status e responsabilidade atual.', `<div class="pdf-grid">
+      ${printableField('Código F4', getF4Code(f4))}${printableField('Versão', f4.finalVersion)}
+      ${printableField('Status', 'Aprovada')}${printableField('Projeto', f4.project || '—')}
+      ${printableField('Criado por', f4.supplier)}${printableField('Última alteração', f4.updatedAt)}
+      ${printableField('Responsável atual', f4.currentAssignee?.name || f4.responsible)}${printableField('Aprovação final', dateTime(f4.finalApprovedAt))}
+    </div>`)
+  ].join('');
+
   win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(getF4Code(f4))} - ${esc(f4.finalVersion)} FINAL</title><style>
-    @page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#202126;font-size:10pt}.toolbar{position:sticky;top:0;display:flex;justify-content:flex-end;padding:10px;background:#fff;border-bottom:1px solid #ddd}.toolbar button{border:0;border-radius:7px;padding:9px 14px;background:#4f16b8;color:#fff;font-weight:700;cursor:pointer}.pdf-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #4f16b8;padding-bottom:12px;margin-bottom:16px}.pdf-header h1{font-size:18pt;margin:0}.pdf-header p{margin:5px 0 0;color:#666}.final-badge{border:1px solid #4f16b8;border-radius:999px;padding:6px 10px;color:#4f16b8;font-weight:700}.section{margin:0 0 15px;page-break-inside:avoid}.section h2{font-size:12pt;margin:0 0 8px;color:#4f16b8}.pdf-grid{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid #ddd}.pdf-field{padding:8px 10px;border-right:1px solid #ddd;border-bottom:1px solid #ddd}.pdf-field span{display:block;font-size:7.5pt;text-transform:uppercase;color:#777;margin-bottom:3px}.pdf-field strong{font-size:9.5pt}.pdf-table{width:100%;border-collapse:collapse}.pdf-table th,.pdf-table td{border:1px solid #ddd;padding:7px;text-align:left}.pdf-table th{background:#f5f3fa}.signatures{display:grid;gap:10px}.digital-signature{display:grid;grid-template-columns:105px 1fr;min-height:88px;border:2px solid #4f16b8;border-radius:8px;overflow:hidden;page-break-inside:avoid}.signature-brand{display:grid;place-items:center;background:#f7f3ff;border-right:1px solid #d8c9f7;padding:10px}.signature-brand img{max-width:72px;max-height:48px;object-fit:contain}.signature-data{display:grid;align-content:center;gap:3px;padding:10px 14px}.signature-data strong{color:#4f16b8;font-size:9pt}.signature-data b{font-size:11pt}.signature-data span{color:#555;font-size:8.5pt}.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;color:#777;font-size:8pt}@media print{.toolbar{display:none}}
+    @page{size:A4;margin:12mm}*{box-sizing:border-box}html{background:#f8f8fa}body{margin:0;font-family:Arial,sans-serif;color:#15151a;font-size:9pt;background:#f8f8fa}.toolbar{position:sticky;top:0;z-index:10;display:flex;justify-content:flex-end;padding:10px 12px;background:#fff;border-bottom:1px solid #e1e1e5}.toolbar button{border:0;border-radius:8px;padding:10px 15px;background:#4f16b8;color:#fff;font-weight:700;cursor:pointer}main{max-width:920px;margin:0 auto;padding:18px 0}.pdf-header{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start;padding:18px 20px;margin-bottom:14px;background:#fff;border:1px solid #dedee4;border-top:3px solid #4f16b8;border-radius:12px}.pdf-header .eyebrow{margin:0 0 5px;color:#4f16b8;font-size:7pt;font-weight:700;letter-spacing:.08em}.pdf-header h1{font-size:17pt;margin:0}.pdf-header p{margin:6px 0 0;color:#666b76;font-size:8.5pt}.final-badge{align-self:center;border:1px solid #cdb9f5;border-radius:999px;padding:7px 11px;background:#f8f4ff;color:#4f16b8;font-size:8pt;font-weight:700;white-space:nowrap}.section-card{margin:0 0 14px;background:#fff;border:1px solid #dedee4;border-radius:12px;overflow:hidden;break-inside:auto}.section-head{padding:14px 16px 12px;border-bottom:1px solid #e2e2e7;break-after:avoid}.section-head p{margin:0 0 5px;color:#4f16b8;font-size:6.8pt;font-weight:700;letter-spacing:.08em}.section-head h2{margin:0;font-size:12.5pt}.section-head span{display:block;margin-top:5px;color:#666b76;font-size:8pt}.pdf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.pdf-field{min-height:52px;padding:9px 11px;border-right:1px solid #e2e2e7;border-bottom:1px solid #e2e2e7;break-inside:avoid}.pdf-field:nth-child(2n){border-right:0}.pdf-field.is-wide{grid-column:1/-1;border-right:0}.pdf-field span{display:block;margin-bottom:5px;color:#666b76;font-size:6.5pt;text-transform:uppercase;letter-spacing:.02em}.pdf-field strong{display:block;font-size:8.5pt;line-height:1.45}.subsection-title{margin:14px 16px 8px;font-size:9.5pt}.pdf-table-wrap{padding:0 16px 15px;overflow:hidden}.pdf-table{width:100%;border-collapse:collapse;table-layout:fixed}.pdf-table th,.pdf-table td{border:1px solid #dedee4;padding:7px 6px;text-align:left;vertical-align:top;word-wrap:break-word}.pdf-table th{background:#f6f2fc;color:#62636d;font-size:6.5pt;text-transform:uppercase}.pdf-table td{font-size:7.5pt;line-height:1.35}.signature-section{padding:15px 16px}.signatures{display:grid;gap:10px}.digital-signature{display:grid;grid-template-columns:95px 1fr;min-height:82px;border:2px solid #4f16b8;border-radius:9px;overflow:hidden;break-inside:avoid}.signature-brand{display:grid;place-items:center;background:#f7f3ff;border-right:1px solid #d8c9f7;padding:10px}.signature-brand img{max-width:68px;max-height:44px;object-fit:contain}.signature-data{display:grid;align-content:center;gap:3px;padding:10px 13px}.signature-data strong{color:#4f16b8;font-size:8pt}.signature-data b{font-size:10.5pt}.signature-data span{color:#555b65;font-size:8pt}.footer{margin-top:18px;padding:10px 2px;border-top:1px solid #d8d8dd;color:#777b84;font-size:7.5pt}@media print{html,body{background:#fff}.toolbar{display:none}main{padding:0}.section-card,.pdf-header{box-shadow:none}}
   </style></head><body><div class="toolbar"><button onclick="window.print()">Salvar / imprimir PDF</button></div><main>
-    <header class="pdf-header"><div><h1>F4 ${esc(getF4Code(f4))}</h1><p>${esc(d.request.title)}</p></div><span class="final-badge">VERSÃO ${esc(f4.finalVersion)} - FINAL</span></header>
-    <section class="section"><h2>Informações gerais</h2><div class="pdf-grid">${printableField('Fornecedor',f4.supplier)}${printableField('Projeto',f4.project)}${printableField('Descrição',d.request.description)}${printableField('Causa da modificação',d.request.changeCause)}${printableField('Status','Aprovada')}${printableField('Aprovação final',dateTime(f4.finalApprovedAt))}</div></section>
-    <section class="section"><h2>Impactos econômicos e técnicos</h2><div class="pdf-grid">${printableField('Moeda',d.impact.currency)}${printableField('Impacto técnico',d.impact.technicalValues?.map(v=>`${v.currency} ${v.value}`).join(' / '))}${printableField('Ferramental',d.impact.toolingAmount)}${printableField('SET',d.impact.setAmount)}${printableField('Volume anual',d.impact.annualVolume)}${printableField('Impacto anual',d.impact.annualImpact)}${printableField('Capacidade anterior',d.capacity.previous)}${printableField('Nova capacidade',d.capacity.next)}</div></section>
-    <section class="section"><h2>Referências impactadas</h2><table class="pdf-table"><thead><tr><th>Referência atual</th><th>Nova referência</th><th>Observação</th></tr></thead><tbody>${refs || '<tr><td colspan="3">Nenhuma referência.</td></tr>'}</tbody></table></section>
-    <section class="section"><h2>DOA</h2><div class="pdf-grid">${printableField('Uso da peça',d.doa.partUsage)}${printableField('Custos iniciais',d.doa.initialCosts)}${printableField('Nível custos iniciais',d.doa.initialDoa)}${printableField('Impacto anual',d.doa.annualImpact)}${printableField('Nível FYI',d.doa.annualDoa)}${printableField('Observações',d.doa.notes)}</div></section>
-    <section class="section"><h2>Assinaturas digitais da versão final</h2><div class="signatures">${signatures.map(signatureCard).join('') || '<p>Nenhuma assinatura válida registrada.</p>'}</div></section>
-    <div class="footer">Documento final da F4 ${esc(getF4Code(f4))}, versão ${esc(f4.finalVersion)}. Somente as aprovações válidas do ciclo que concluiu esta versão aparecem neste documento.</div>
+    <header class="pdf-header"><div><p class="eyebrow">DOCUMENTO FINAL DA F4</p><h1>F4 ${esc(getF4Code(f4))}</h1><p>${esc(d.request.title)}</p></div><span class="final-badge">VERSÃO ${esc(f4.finalVersion)} - FINAL</span></header>
+    ${sections}
+    <section class="section-card"><div class="section-head"><p>ASSINATURAS DIGITAIS</p><h2>Assinaturas da versão final</h2><span>Somente as aprovações válidas do ciclo que concluiu esta versão aparecem neste documento.</span></div><div class="signature-section"><div class="signatures">${signatures.map(signatureCard).join('') || '<p>Nenhuma assinatura válida registrada.</p>'}</div></div></section>
+    <div class="footer">Documento final da F4 ${esc(getF4Code(f4))}, versão ${esc(f4.finalVersion)}. Gerado pelo sistema F4.</div>
   </main><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script></body></html>`);
   win.document.close();
 }
@@ -975,9 +1415,11 @@ function field(label, value, options = {}) {
   return `<div class="review-data-field ${options.wide ? 'is-wide' : ''}"><span>${esc(label)}</span><strong>${esc(value ?? '—')}</strong>${options.help ? `<small>${esc(options.help)}</small>` : ''}</div>`;
 }
 function sectionCard(id, kicker, title, description, body) {
-  return `<section class="card detail-card validation-data-section" id="section-${esc(id)}">
-    <div class="detail-section-heading"><div><p class="detail-kicker">${esc(kicker)}</p><h3>${esc(title)}</h3><p>${esc(description)}</p></div></div>
-    ${body}
+  const changedCount = sectionChangedCount(id);
+  const isEditing = editingSectionId === id;
+  return `<section class="card detail-card validation-data-section ${changedCount ? 'has-edits' : ''} ${isEditing ? 'is-editing' : ''}" id="section-${esc(id)}">
+    <div class="detail-section-heading"><div><p class="detail-kicker">${esc(kicker)}</p><h3>${esc(title)}</h3><p>${esc(description)}</p></div><div class="section-heading-actions">${changedCount ? `<span class="section-edited-badge">${changedCount} campo${changedCount === 1 ? '' : 's'} alterado${changedCount === 1 ? '' : 's'}</span>` : ''}${sectionEditButton(id)}</div></div>
+    ${isEditing ? sectionEditorPanel(id) : body}
     ${commentsPanel(id, title)}
   </section>`;
 }
@@ -991,7 +1433,10 @@ function reviewNavigation() {
     ['ferramental-set', 'Ferramental / SET'], ['referencias', 'Referências'], ['documentos', 'Antes / depois'],
     ['capacidade', 'Capacidade'], ['doa', 'DOA'], ['metadados', 'Metadados']
   ];
-  return `<nav class="review-section-nav" aria-label="Seções da F4">${items.map(([id, label]) => `<a href="#section-${id}">${label}</a>`).join('')}</nav>`;
+  return `<nav class="review-section-nav" aria-label="Seções da F4">${items.map(([id, label]) => {
+    const count = sectionChangedCount(id);
+    return `<a href="#section-${id}" class="${count ? 'has-edits' : ''}"><span>${label}</span>${count ? `<b class="nav-edit-count" title="${count} campo${count === 1 ? '' : 's'} alterado${count === 1 ? '' : 's'}">${count}</b>` : ''}</a>`;
+  }).join('')}</nav>`;
 }
 
 function fullReviewSections() {
@@ -1172,7 +1617,7 @@ function actionWorkspace() {
   if (f4.status === 'Aprovada') return '';
   if (profile.id === 'supplier' && f4.currentStep === 'supplier') {
     if (f4.status === 'Rejeitada') {
-      return `<section class="card detail-card action-workspace rejected-version-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Versão rejeitada</p><h3>Crie uma nova versão antes de reenviar</h3><p>O motivo da rejeição permanece registrado no histórico. Use “Editar conteúdo da F4” no topo, altere os dados necessários e salve para gerar a próxima versão.</p></div><span class="responsibility-chip">Versão rejeitada ${currentVersion()}</span></div></section>`;
+      return `<section class="card detail-card action-workspace rejected-version-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Versão rejeitada</p><h3>Crie uma nova versão antes de reenviar</h3><p>O motivo da rejeição permanece registrado no histórico. Use o lápis nas seções indicadas, altere os dados necessários e salve para gerar a próxima versão.</p></div><span class="responsibility-chip">Versão rejeitada ${currentVersion()}</span></div></section>`;
     }
     if (['Devolvida','Rascunho'].includes(f4.status)) {
       return `<section class="card detail-card action-workspace"><div class="detail-section-heading"><div><p class="detail-kicker">Sua responsabilidade</p><h3>Correção pelo fornecedor</h3><p>Revise as orientações, faça as alterações de conteúdo necessárias e reenvie a F4 para a validação comercial.</p></div></div><div class="review-form-footer"><span>O reenvio não muda a versão; somente a edição de conteúdo gera uma nova versão.</span><button class="review-submit-button" id="resubmitButton">Reenviar para validação comercial</button></div></section>`;
@@ -1211,6 +1656,8 @@ function transition(decision, areas, guidance) {
     f4.responsible = f4.supplier;
     f4.sector = 'Fornecedor';
     f4.currentAssigneeSince = now;
+    f4.pendingReviewChanges = {};
+    f4.lastSubmittedChanges = {};
   } else if (decision === 'return') {
     appendHistory({
       step, label, date: now, status: 'Devolvida', newStatus: 'Devolvida', by: profile.name,
@@ -1226,6 +1673,8 @@ function transition(decision, areas, guidance) {
     f4.responsible = f4.supplier;
     f4.sector = 'Fornecedor';
     f4.currentAssigneeSince = now;
+    f4.pendingReviewChanges = {};
+    f4.lastSubmittedChanges = {};
   } else {
     const next = {
       commercial: ['technical', 'Em validação técnica', 'Engenharia', { profileId: 'technical', name: 'Mariana Silva', role: 'Engenharia · Validação técnica' }],
@@ -1284,7 +1733,7 @@ function render() {
     return;
   }
   content.innerHTML = `
-    <section class="detail-heading"><div class="detail-heading-main"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div><div class="detail-version-actions"><span class="version-chip ${f4.finalVersion === currentVersion() ? 'is-final' : ''}">Versão ${currentVersion()}${f4.finalVersion === currentVersion() ? ' · FINAL' : ''}</span>${canEditContent() ? `<button class="version-action-button" id="editContentButton" type="button">${editExpanded ? 'Fechar edição' : 'Editar conteúdo da F4'}</button>` : ''}${f4.status === 'Aprovada' && f4.finalVersion ? '<button class="version-action-button primary" id="finalPdfButton" type="button">Gerar PDF final</button>' : ''}</div></div></section>
+    <section class="detail-heading"><div class="detail-heading-main"><div><a class="back-link" href="./minhas-f4.html">← Voltar</a><div class="detail-title-line"><h2>${getF4Code(f4)} — ${esc(f4.title)}</h2><span class="status-badge ${cls(f4.status)}">${esc(f4.status)}</span></div><p class="detail-subtitle">${esc(f4.description)}</p></div><div class="detail-version-actions"><span class="version-chip ${f4.finalVersion === currentVersion() ? 'is-final' : ''}">Versão ${currentVersion()}${f4.finalVersion === currentVersion() ? ' · FINAL' : ''}</span>${f4.status === 'Aprovada' && f4.finalVersion ? '<button class="version-action-button primary" id="finalPdfButton" type="button">Gerar PDF final</button>' : ''}</div></div></section>
     <div class="detail-grid">
       <section class="card detail-card"><div class="detail-section-heading"><div><p class="detail-kicker">F4</p><h3>Informações da solicitação</h3><p>Resumo operacional e responsável atual.</p></div></div><div class="current-owner-banner"><div class="current-owner-avatar">${esc((f4.currentAssignee?.name || '?').split(' ').map(n => n[0]).slice(0, 2).join(''))}</div><div><span>F4 está com</span><strong>${esc(f4.currentAssignee?.name || f4.responsible)}</strong><small>${esc(f4.currentAssignee?.role || f4.sector)} · ${elapsed(f4.currentAssigneeSince)}</small></div></div><div class="detail-fields"><div class="detail-field"><span>Código F4</span><strong>${getF4Code(f4)}</strong></div><div class="detail-field"><span>Fornecedor</span><strong>${esc(f4.supplier)}</strong></div><div class="detail-field"><span>Projeto</span><strong>${esc(f4.project || '—')}</strong></div><div class="detail-field"><span>Setor atual</span><strong>${esc(f4.sector)}</strong></div><div class="detail-field"><span>Etapa atual</span><strong>${esc(f4.stage)}</strong></div><div class="detail-field"><span>Última atualização</span><strong>${fmt(f4.updatedAt)}</strong></div><div class="detail-field"><span>Prazo</span><strong>${fmt(f4.dueDate)}</strong></div></div></section>
       <aside class="card detail-card process-card"><div class="detail-section-heading"><div><p class="detail-kicker">Andamento</p><h3>Fluxo da F4</h3></div></div>${processTimeline()}
@@ -1298,7 +1747,6 @@ function render() {
       </aside>
     </div>
     ${changeHistoryPanel()}
-    ${contentEditorPanel()}
     <div class="complete-review-sticky">
       <section class="complete-review-heading"><div><p class="detail-kicker">Dossiê para validação</p><h3>Informações completas da F4</h3><p>Revise todos os dados registrados antes de aprovar, devolver ou rejeitar a solicitação. Cada seção permite registrar comentários específicos.</p></div><span>10 seções de análise</span></section>
       ${reviewNavigation()}
@@ -1306,7 +1754,7 @@ function render() {
     <div class="complete-review-stack">${fullReviewSections()}</div>
     <div class="review-information-grid">${approvalPanel()}${guidancePanel()}</div>
     ${actionWorkspace()}
-    ${profile.id === 'supplier' ? '<section class="supplier-readonly-note"><strong>Validações Renault</strong><span>O fornecedor acompanha as decisões e orientações, mas não edita aprovações internas.</span></section>' : ''}`;
+    ${profile.id === 'supplier' ? `<section class="supplier-readonly-note"><strong>Validações Renault</strong><span>${canEditContent() ? 'Esta F4 foi devolvida. Use o lápis em cada seção para editar somente os dados necessários; ao reenviar, a edição será bloqueada novamente.' : 'O fornecedor acompanha as decisões e orientações, mas a edição só é liberada quando a F4 é devolvida para correção.'}</span></section>` : ''}`;
   setup();
 }
 
@@ -1480,29 +1928,57 @@ function setupComments() {
 
 function setupVersionDownloads() {
   document.querySelectorAll('[data-download-history]').forEach(button => {
-    button.onclick = () => downloadHistoryPdf(button.dataset.downloadHistory);
+    button.onclick = event => {
+      event.stopPropagation();
+      downloadHistoryPdf(button.dataset.downloadHistory);
+    };
   });
 }
 
-function setupContentEditor() {
-  const toggle = document.querySelector('#editContentButton');
-  if (toggle) toggle.onclick = () => {
-    editExpanded = !editExpanded;
-    render();
-    if (editExpanded) requestAnimationFrame(() => document.querySelector('#contentEditorPanel')?.scrollIntoView({ behavior:'smooth', block:'start' }));
-  };
-  const cancel = document.querySelector('#cancelContentEdit');
-  if (cancel) cancel.onclick = () => { editExpanded = false; render(); };
-  const form = document.querySelector('#contentEditForm');
-  if (form) form.onsubmit = event => {
-    event.preventDefault();
-    if (!saveContentEdition(form)) return;
-    const newVersion = currentVersion();
-    editExpanded = false;
-    showToast(`Conteúdo atualizado. Nova versão ${newVersion} criada. O snapshot interno foi registrado e o PDF está disponível no histórico.`);
-    f4 = getF4ById(f4.id);
-    render();
-  };
+function setupSectionEditors() {
+  document.querySelectorAll('[data-edit-section]').forEach(button => {
+    button.onclick = () => {
+      const sectionId = button.dataset.editSection;
+      editingSectionId = editingSectionId === sectionId ? null : sectionId;
+      render();
+      if (editingSectionId) requestAnimationFrame(() => document.querySelector(`#section-${CSS.escape(editingSectionId)}`)?.scrollIntoView({ behavior:'smooth', block:'center' }));
+    };
+  });
+  document.querySelectorAll('[data-cancel-section-edit]').forEach(button => {
+    button.onclick = () => { editingSectionId = null; render(); };
+  });
+  document.querySelectorAll('[data-edit-form]').forEach(form => {
+    form.onsubmit = event => {
+      event.preventDefault();
+      const sectionId = form.dataset.editForm;
+      if (!saveSectionEdition(form, sectionId)) return;
+      const version = currentVersion();
+      editingSectionId = null;
+      showToast(`Seção atualizada. A versão ${version} foi registrada e ficará destacada para a próxima validação.`);
+      f4 = getF4ById(f4.id);
+      render();
+      requestAnimationFrame(() => document.querySelector(`#section-${CSS.escape(sectionId)}`)?.scrollIntoView({ behavior:'smooth', block:'center' }));
+    };
+  });
+}
+
+function setupHistoryRows() {
+  document.querySelectorAll('[data-history-row]').forEach(row => {
+    const toggle = () => {
+      const id = row.dataset.historyRow;
+      const detail = document.querySelector(`[data-history-detail="${CSS.escape(id)}"]`);
+      if (!detail) return;
+      const opening = detail.hidden;
+      detail.hidden = !opening;
+      row.classList.toggle('is-open', opening);
+      row.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) expandedHistoryRows.add(id); else expandedHistoryRows.delete(id);
+    };
+    row.onclick = event => { if (!event.target.closest('button,a,input,textarea,select')) toggle(); };
+    row.onkeydown = event => {
+      if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('button,a,input,textarea,select')) { event.preventDefault(); toggle(); }
+    };
+  });
 }
 
 function setupFinalPdf() {
@@ -1530,8 +2006,9 @@ function updateDecisionFields(form, correctionFields) {
 
 function setup() {
   setupHistoryToggle();
+  setupHistoryRows();
   setupVersionDownloads();
-  setupContentEditor();
+  setupSectionEditors();
   setupFinalPdf();
   setupComments();
   setupSectionNavigation();
@@ -1558,7 +2035,14 @@ function setup() {
   const resubmitButton = document.querySelector('#resubmitButton');
   if (resubmitButton) resubmitButton.onclick = () => {
     const now = new Date().toISOString();
-    appendHistory({ step: 'commercial', label: 'Reenvio para validação comercial', date: now, status: 'Em andamento', newStatus: 'Em validação comercial', by: profile.name, sector: 'Fornecedor', description: 'F4 corrigida pelo fornecedor e reenviada para nova validação comercial.' });
+    const submittedChanges = cloneValue(f4.pendingReviewChanges || {}) || {};
+    f4.lastSubmittedChanges = submittedChanges;
+    f4.pendingReviewChanges = {};
+    appendHistory({
+      step: 'commercial', label: 'Reenvio para validação comercial', date: now, status: 'Em andamento', newStatus: 'Em validação comercial',
+      by: profile.name, sector: 'Fornecedor', description: 'F4 corrigida pelo fornecedor e reenviada para nova validação comercial.',
+      submittedChanges, changedFields: Object.values(submittedChanges).flatMap(section => section.changedFields || [])
+    });
     f4.status = 'Em validação comercial'; f4.stage = 'Validação comercial'; f4.currentStep = 'commercial'; f4.returnedToProfile = null; f4.rejectedVersion = null;
     f4.currentAssignee = { profileId: 'commercial', name: 'Carlos Braatz', role: 'Compras · Validação comercial' };
     f4.responsible = 'Carlos Braatz'; f4.sector = 'Compras'; f4.currentAssigneeSince = now;
