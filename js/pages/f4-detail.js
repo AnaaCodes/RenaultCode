@@ -503,6 +503,95 @@ function render() {
   setup();
 }
 
+let sectionNavigationCleanup = null;
+
+function setupSectionNavigation() {
+  if (sectionNavigationCleanup) {
+    sectionNavigationCleanup();
+    sectionNavigationCleanup = null;
+  }
+
+  const sticky = document.querySelector('.complete-review-sticky');
+  const nav = document.querySelector('.review-section-nav');
+  if (!sticky || !nav) return;
+
+  const links = [...nav.querySelectorAll('a[href^="#section-"]')];
+  const entries = links.map(link => ({
+    link,
+    section: document.querySelector(link.getAttribute('href'))
+  })).filter(entry => entry.section);
+  if (!entries.length) return;
+
+  let activeId = '';
+  let ticking = false;
+
+  const keepActiveVisible = link => {
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    if (linkRect.left < navRect.left + 8 || linkRect.right > navRect.right - 8) {
+      nav.scrollTo({
+        left: link.offsetLeft - (nav.clientWidth - link.offsetWidth) / 2,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const setActive = (entry, ensureVisible = true) => {
+    const id = entry.section.id;
+    if (activeId === id) return;
+    activeId = id;
+    entries.forEach(item => {
+      const isActive = item === entry;
+      item.link.classList.toggle('is-active', isActive);
+      if (isActive) item.link.setAttribute('aria-current', 'location');
+      else item.link.removeAttribute('aria-current');
+    });
+    if (ensureVisible) keepActiveVisible(entry.link);
+  };
+
+  const syncActiveSection = () => {
+    ticking = false;
+    const stickyBottom = sticky.getBoundingClientRect().bottom;
+    const activationLine = stickyBottom + 28;
+    let current = entries[0];
+
+    for (const entry of entries) {
+      if (entry.section.getBoundingClientRect().top <= activationLine) current = entry;
+      else break;
+    }
+
+    const pageBottom = window.scrollY + window.innerHeight;
+    const documentBottom = document.documentElement.scrollHeight - 4;
+    if (pageBottom >= documentBottom) current = entries[entries.length - 1];
+
+    setActive(current);
+  };
+
+  const scheduleSync = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(syncActiveSection);
+  };
+
+  const onNavClick = event => {
+    const link = event.target.closest('a[href^="#section-"]');
+    if (!link) return;
+    const entry = entries.find(item => item.link === link);
+    if (entry) setActive(entry, false);
+  };
+
+  window.addEventListener('scroll', scheduleSync, { passive: true });
+  window.addEventListener('resize', scheduleSync);
+  nav.addEventListener('click', onNavClick);
+  syncActiveSection();
+
+  sectionNavigationCleanup = () => {
+    window.removeEventListener('scroll', scheduleSync);
+    window.removeEventListener('resize', scheduleSync);
+    nav.removeEventListener('click', onNavClick);
+  };
+}
+
 function setupComments() {
   document.querySelectorAll('.section-comment-toggle').forEach(button => {
     button.onclick = () => {
@@ -552,6 +641,7 @@ function setupComments() {
 
 function setup() {
   setupComments();
+  setupSectionNavigation();
   const form = document.querySelector('#roleReviewForm');
   const correctionFields = document.querySelector('#correctionFields');
   if (form) {

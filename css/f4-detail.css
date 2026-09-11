@@ -172,31 +172,51 @@
 }
 .review-section-nav {
   display:flex;
-  gap:7px;
+  gap:5px;
   overflow-x:auto;
-  margin:0;
-  padding:3px 1px 6px;
+  margin:8px 0 0;
+  padding:5px;
+  border:1px solid rgba(79,22,184,.10);
+  border-radius:16px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 4px 12px rgba(29,18,54,.04);
   scrollbar-width:thin;
 }
 .review-section-nav a {
   flex:0 0 auto;
   display:inline-flex;
   align-items:center;
-  min-height:32px;
-  padding:0 11px;
-  border:1px solid #dfdfe3;
-  border-radius:8px;
-  background:#fff;
+  justify-content:center;
+  min-height:34px;
+  padding:0 13px;
+  border:1px solid transparent;
+  border-radius:11px;
+  background:transparent;
   color:var(--text-secondary);
   text-decoration:none;
   font-size:10.5px;
   font-weight:500;
-  transition:border-color .15s ease, color .15s ease, background .15s ease;
+  white-space:nowrap;
+  transition:border-color .18s ease, color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 .review-section-nav a:hover {
-  border-color:rgba(79,22,184,.32);
-  background:#fdfbff;
+  border-color:rgba(79,22,184,.18);
+  background:#f7f3ff;
   color:var(--purple);
+}
+.review-section-nav a.is-active,
+.review-section-nav a[aria-current="location"] {
+  border-color:var(--purple);
+  background:var(--purple);
+  color:#fff;
+  box-shadow:0 4px 10px rgba(79,22,184,.20);
+  font-weight:600;
+}
+.review-section-nav a.is-active:hover,
+.review-section-nav a[aria-current="location"]:hover {
+  background:var(--purple);
+  color:#fff;
+  transform:none;
 }
 .complete-review-stack { display:grid; gap:18px; }
 .validation-data-section { scroll-margin-top:calc(var(--topbar-height) + 145px); }
@@ -487,7 +507,9 @@
     padding:8px 3px 7px;
   }
   .complete-review-heading p:not(.detail-kicker) { display:none; }
-  .validation-data-section { scroll-margin-top:calc(var(--topbar-height) + 132px); }
+  .review-section-nav { border-radius:14px; padding:4px; }
+  .review-section-nav a { min-height:33px; padding:0 11px; border-radius:10px; }
+  .validation-data-section { scroll-margin-top:calc(var(--topbar-height) + 138px); }
   .complete-review-heading { align-items:flex-start; flex-direction:column; gap:12px; }
   .review-metric-grid { grid-template-columns:1fr; }
   .before-after-grid { grid-template-columns:1fr; }
