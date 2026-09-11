@@ -208,6 +208,20 @@
               </div>
 
               <div class="form-actions-buttons">
+                <div class="form-actions-utilities" aria-label="Ações do rascunho">
+                  <button class="footer-action-button footer-action-button--neutral" type="button" id="clearPageButton">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.7 5.7 18.3 18.3M18.3 5.7 5.7 18.3"/></svg>
+                    Limpar campos
+                  </button>
+
+                  <button class="footer-action-button footer-action-button--danger" type="button" id="deleteDraftButton">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-9 4h12m-10 0 .7 13h6.6L16 7M10 10v7m4-7v7"/></svg>
+                    Excluir rascunho
+                  </button>
+                </div>
+
+                <span class="form-actions-divider" aria-hidden="true"></span>
+
                 <button class="secondary-button" type="button" id="saveDraftButton">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5V3Zm2 2v14h10V6.2L15.8 5H15v5H9V5H7Zm4 0v3h2V5h-2Zm-2 8h6v4H9v-4Z"/></svg>
                   Salvar rascunho
@@ -223,6 +237,21 @@
         </div>
       </main>
     </div>
+  </div>
+
+
+  <div class="confirm-dialog-backdrop" id="confirmActionDialog" hidden>
+    <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmActionTitle" aria-describedby="confirmActionMessage">
+      <div class="confirm-dialog-icon" id="confirmActionIcon" aria-hidden="true">!</div>
+      <div class="confirm-dialog-copy">
+        <h3 id="confirmActionTitle">Confirmar ação</h3>
+        <p id="confirmActionMessage"></p>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button class="secondary-button" type="button" id="cancelConfirmAction">Cancelar</button>
+        <button class="confirm-dialog-button" type="button" id="confirmActionButton">Confirmar</button>
+      </div>
+    </section>
   </div>
 
   <script type="module" src="./js/pages/nova-f4.js"></script>

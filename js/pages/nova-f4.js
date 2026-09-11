@@ -5,6 +5,13 @@ mountAppShell({ activePage: 'nova-f4', title: 'NOVA F4' });
 
 const form = document.querySelector('#newF4Form');
 const saveDraftButton = document.querySelector('#saveDraftButton');
+const clearPageButton = document.querySelector('#clearPageButton');
+const deleteDraftButton = document.querySelector('#deleteDraftButton');
+const confirmActionDialog = document.querySelector('#confirmActionDialog');
+const confirmActionTitle = document.querySelector('#confirmActionTitle');
+const confirmActionMessage = document.querySelector('#confirmActionMessage');
+const confirmActionButton = document.querySelector('#confirmActionButton');
+const cancelConfirmAction = document.querySelector('#cancelConfirmAction');
 const autosaveStatus = document.querySelector('#autosaveStatus');
 const description = document.querySelector('#description');
 const changeCause = document.querySelector('#changeCause');
@@ -212,6 +219,16 @@ function setupStepperNavigation() {
 }
 
 const DRAFT_KEY = 'f4-new-draft-step-1';
+const ALL_DRAFT_KEYS = [
+  'f4-new-draft-step-1',
+  'f4-new-draft-step-3',
+  'f4-new-draft-impact-details',
+  'f4-new-draft-doa',
+  'f4-new-draft-review'
+];
+
+let pendingConfirmationAction = null;
+let confirmationTrigger = null;
 
 function updateCounters() {
   descriptionCount.textContent = description.value.length;
@@ -269,6 +286,51 @@ function restoreDraft() {
   }
 }
 
+function closeConfirmationDialog() {
+  if (!confirmActionDialog) return;
+  confirmActionDialog.hidden = true;
+  document.body.classList.remove('has-confirm-dialog');
+  pendingConfirmationAction = null;
+  confirmationTrigger?.focus();
+  confirmationTrigger = null;
+}
+
+function openConfirmationDialog({ trigger, title, message, confirmLabel, tone = 'danger', action }) {
+  if (!confirmActionDialog) return;
+
+  confirmationTrigger = trigger || document.activeElement;
+  pendingConfirmationAction = action;
+  confirmActionTitle.textContent = title;
+  confirmActionMessage.textContent = message;
+  confirmActionButton.textContent = confirmLabel;
+  confirmActionButton.dataset.tone = tone;
+  confirmActionDialog.hidden = false;
+  document.body.classList.add('has-confirm-dialog');
+
+  requestAnimationFrame(() => cancelConfirmAction?.focus());
+}
+
+function clearCurrentPageFields() {
+  form.reset();
+  clearValidation();
+  updateCounters();
+  autosaveStatus.textContent = 'Campos limpos nesta sessão. O rascunho salvo continua disponível.';
+  showToast('Campos da página limpos. O rascunho salvo foi mantido.');
+}
+
+function deleteEntireDraft() {
+  const hadDraft = ALL_DRAFT_KEYS.some(key => localStorage.getItem(key) !== null);
+  ALL_DRAFT_KEYS.forEach(key => localStorage.removeItem(key));
+
+  autosaveStatus.textContent = hadDraft
+    ? 'Rascunho excluído. Os dados atuais da tela não foram alterados.'
+    : 'Nenhum rascunho salvo foi encontrado.';
+
+  showToast(hadDraft
+    ? 'Rascunho excluído de todas as etapas da F4.'
+    : 'Não há rascunho salvo para excluir.');
+}
+
 function clearValidation() {
   form.querySelectorAll('.form-field.is-invalid').forEach(field => field.classList.remove('is-invalid'));
 }
@@ -298,6 +360,47 @@ form.addEventListener('input', event => {
 
 form.addEventListener('change', () => {
   autosaveStatus.textContent = 'Alterações ainda não salvas.';
+});
+
+clearPageButton?.addEventListener('click', () => {
+  openConfirmationDialog({
+    trigger: clearPageButton,
+    title: 'Limpar os campos desta página?',
+    message: 'Os valores preenchidos nesta página serão removidos da tela. O rascunho já salvo continuará disponível e poderá ser recuperado ao recarregar a página.',
+    confirmLabel: 'Limpar campos',
+    tone: 'warning',
+    action: clearCurrentPageFields
+  });
+});
+
+deleteDraftButton?.addEventListener('click', () => {
+  openConfirmationDialog({
+    trigger: deleteDraftButton,
+    title: 'Excluir o rascunho da F4?',
+    message: 'Esta ação removerá o rascunho salvo de todas as etapas desta F4 neste navegador. Os valores que já estão visíveis na tela não serão apagados automaticamente.',
+    confirmLabel: 'Excluir rascunho',
+    tone: 'danger',
+    action: deleteEntireDraft
+  });
+});
+
+cancelConfirmAction?.addEventListener('click', closeConfirmationDialog);
+
+confirmActionButton?.addEventListener('click', () => {
+  const action = pendingConfirmationAction;
+  closeConfirmationDialog();
+  action?.();
+});
+
+confirmActionDialog?.addEventListener('click', event => {
+  if (event.target === confirmActionDialog) closeConfirmationDialog();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && confirmActionDialog && !confirmActionDialog.hidden) {
+    event.preventDefault();
+    closeConfirmationDialog();
+  }
 });
 
 saveDraftButton.addEventListener('click', () => saveDraft());
