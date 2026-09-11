@@ -121,7 +121,23 @@ document.querySelectorAll('[data-go="minhas-f4"]').forEach(element => {
 });
 
 document.querySelectorAll('[data-go="returned"]').forEach(element => {
-  element.onclick = () => go('returned');
+  element.onclick = () => location.href = './pendencias.html?type=action';
+});
+
+document.querySelectorAll('[data-go="dueSoon"]').forEach(element => {
+  element.onclick = () => location.href = './pendencias.html?type=soon';
+});
+
+document.querySelectorAll('[data-go="approval"]').forEach(element => {
+  element.onclick = () => location.href = './pendencias.html?type=action';
+});
+
+document.querySelectorAll('[data-go="pending"]').forEach(element => {
+  element.onclick = () => location.href = './pendencias.html';
+});
+
+document.querySelectorAll('[data-go="history"]').forEach(element => {
+  element.onclick = () => location.href = './historico.html';
 });
 
 document.querySelectorAll('[data-go="projects"]').forEach(element => {

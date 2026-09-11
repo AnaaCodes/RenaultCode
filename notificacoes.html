@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Notificações das F4">
+  <title>Notificações | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/activity-pages.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content activity-page">
+        <div class="page-container activity-container">
+          <section class="activity-heading" aria-labelledby="activityTitle">
+            <div>
+              <p class="eyebrow">Atualizações</p>
+              <h2 id="activityTitle">Notificações</h2>
+              <p class="activity-description" id="activityDescription"></p>
+            </div>
+            <button class="mark-read-button" id="markAllRead" type="button">Marcar todas como lidas</button>
+          </section>
+
+          <section class="activity-summary-grid" aria-label="Resumo das notificações">
+            <article class="activity-summary-card"><span class="summary-label">Não lidas</span><strong id="notificationUnread">0</strong><small>Atualizações que ainda não foram abertas neste perfil.</small></article>
+            <article class="activity-summary-card warning"><span class="summary-label">Exigem ação</span><strong id="notificationAction">0</strong><small>F4 que dependem de uma decisão ou correção.</small></article>
+            <article class="activity-summary-card blue"><span class="summary-label">Atualizações</span><strong id="notificationUpdates">0</strong><small>Mudanças recentes de etapa, responsável ou conteúdo.</small></article>
+            <article class="activity-summary-card success"><span class="summary-label">Concluídas</span><strong id="notificationDone">0</strong><small>F4 aprovadas ou encerradas recentemente.</small></article>
+          </section>
+
+          <section class="activity-panel" aria-labelledby="notificationListTitle">
+            <div class="activity-panel-header"><div><h3 id="notificationListTitle">Central de notificações</h3><p>Clique em uma notificação para abrir a F4 relacionada.</p></div><span class="activity-count" id="notificationResultCount">0</span></div>
+            <div class="notification-filter-row" role="group" aria-label="Filtrar notificações">
+              <button class="notification-filter is-active" type="button" data-notification-filter="all">Todas</button>
+              <button class="notification-filter" type="button" data-notification-filter="unread">Não lidas</button>
+              <button class="notification-filter" type="button" data-notification-filter="action">Exigem ação</button>
+              <button class="notification-filter" type="button" data-notification-filter="update">Atualizações</button>
+              <button class="notification-filter" type="button" data-notification-filter="complete">Concluídas</button>
+            </div>
+            <div class="notification-list" id="notificationList"></div>
+            <div class="activity-empty" id="notificationEmpty" hidden><strong>Nenhuma notificação encontrada</strong><span>Não há atualizações correspondentes a este filtro.</span></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/notificacoes.js"></script>
+</body>
+</html>

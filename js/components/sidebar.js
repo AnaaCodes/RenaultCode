@@ -5,9 +5,9 @@ const navItems = [
   { id: 'nova-f4', label: 'Nova F4', href: './nova-f4.html', icon: './assets/icons/nova-f4.png', permission: 'createF4' },
   { id: 'minhas-f4', label: 'Minhas F4', href: './minhas-f4.html', icon: './assets/icons/minhas-f4.png' },
   { id: 'projetos', label: 'Projetos', href: './projetos.html', icon: './assets/icons/projetos.svg', permission: 'viewProjects' },
-  { id: 'pendencias', label: 'Pendências', href: './minhas-f4.html?returned=me', icon: './assets/icons/pendencias.png' },
-  { id: 'historico', label: 'Histórico', href: '#', icon: './assets/icons/historico.png', placeholder: true },
-  { id: 'notificacoes', label: 'Notificações', href: '#', icon: './assets/icons/notificacoes.png', placeholder: true }
+  { id: 'pendencias', label: 'Pendências', href: './pendencias.html', icon: './assets/icons/pendencias.png' },
+  { id: 'historico', label: 'Histórico', href: './historico.html', icon: './assets/icons/historico.png' },
+  { id: 'notificacoes', label: 'Notificações', href: './notificacoes.html', icon: './assets/icons/notificacoes.png' }
 ];
 
 function f4Label(profile) {

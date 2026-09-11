@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Histórico das alterações das F4">
+  <title>Histórico | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/activity-pages.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content activity-page">
+        <div class="page-container activity-container">
+          <section class="activity-heading" aria-labelledby="activityTitle">
+            <div>
+              <p class="eyebrow">Rastreabilidade</p>
+              <h2 id="activityTitle">Histórico</h2>
+              <p class="activity-description" id="activityDescription"></p>
+            </div>
+          </section>
+
+          <section class="activity-summary-grid" aria-label="Resumo do histórico">
+            <article class="activity-summary-card"><span class="summary-label">Registros visíveis</span><strong id="historyTotal">0</strong><small>Alterações dentro do seu escopo de acesso.</small></article>
+            <article class="activity-summary-card blue"><span class="summary-label">F4 acompanhadas</span><strong id="historyF4Count">0</strong><small>Solicitações com movimentações registradas.</small></article>
+            <article class="activity-summary-card success"><span class="summary-label">Aprovações</span><strong id="historyApprovals">0</strong><small>Etapas registradas como aprovadas.</small></article>
+            <article class="activity-summary-card warning"><span class="summary-label">Devoluções / rejeições</span><strong id="historyReturns">0</strong><small>Registros que exigiram revisão ou encerramento.</small></article>
+          </section>
+
+          <section class="activity-panel" aria-labelledby="historyTableTitle">
+            <div class="activity-panel-header"><div><h3 id="historyTableTitle">Alterações registradas</h3><p>Os eventos são exibidos do mais recente para o mais antigo.</p></div><span class="activity-count" id="historyResultCount">0</span></div>
+            <div class="activity-toolbar">
+              <input class="activity-search" id="historySearch" type="search" placeholder="Buscar por F4, alteração, usuário ou descrição">
+              <select class="activity-select" id="historyType"><option value="all">Todos os tipos</option><option value="approval">Aprovações</option><option value="return">Devoluções</option><option value="rejection">Rejeições</option><option value="content">Alterações de conteúdo</option></select>
+              <select class="activity-select" id="historyPeriod"><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option></select>
+              <button class="activity-clear" id="historyClear" type="button">Limpar filtros</button>
+            </div>
+            <div class="activity-table-wrap">
+              <table class="activity-table">
+                <thead><tr><th>Data</th><th>F4</th><th>Versão</th><th>Alteração</th><th>Novo status</th><th>Responsável</th><th>Setor</th></tr></thead>
+                <tbody id="historyBody"></tbody>
+              </table>
+            </div>
+            <div class="activity-empty" id="historyEmpty" hidden><strong>Nenhum registro encontrado</strong><span>Ajuste os filtros para consultar outras alterações.</span></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/historico.js"></script>
+</body>
+</html>

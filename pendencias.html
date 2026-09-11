@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Pendências das F4">
+  <title>Pendências | Sistema F4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@300;400;500;600&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/activity-pages.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <div id="sidebarMount"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <div class="workspace">
+      <div id="headerMount"></div>
+      <main class="main-content activity-page">
+        <div class="page-container activity-container">
+          <section class="activity-heading" aria-labelledby="activityTitle">
+            <div>
+              <p class="eyebrow">Prioridades</p>
+              <h2 id="activityTitle">Pendências</h2>
+              <p class="activity-description" id="activityDescription"></p>
+            </div>
+          </section>
+
+          <section class="activity-summary-grid" aria-label="Resumo das pendências">
+            <article class="activity-summary-card"><span class="summary-label" id="pendingActionLabel">Exigem sua ação</span><strong id="pendingActionCount">0</strong><small id="pendingActionHelp">F4 que dependem de uma ação deste perfil.</small></article>
+            <article class="activity-summary-card warning"><span class="summary-label">Próximas do prazo</span><strong id="pendingSoonCount">0</strong><small>Prazo previsto para os próximos cinco dias.</small></article>
+            <article class="activity-summary-card danger"><span class="summary-label">Em atraso</span><strong id="pendingOverdueCount">0</strong><small>F4 abertas com prazo já ultrapassado.</small></article>
+            <article class="activity-summary-card blue"><span class="summary-label" id="pendingWatchLabel">Em acompanhamento</span><strong id="pendingWatchCount">0</strong><small id="pendingWatchHelp">F4 visíveis que continuam em fluxo.</small></article>
+          </section>
+
+          <section class="pending-focus-grid" aria-label="Tipos de prioridade">
+            <article class="pending-focus-card"><div class="pending-focus-top"><span class="pending-focus-icon">!</span><strong class="count" id="focusActionCount">0</strong></div><div><h3 id="focusActionTitle">Ação necessária</h3><p id="focusActionDescription">Solicitações aguardando uma ação direta deste perfil.</p></div></article>
+            <article class="pending-focus-card warning"><div class="pending-focus-top"><span class="pending-focus-icon">◷</span><strong class="count" id="focusSoonCount">0</strong></div><div><h3>Prazo próximo</h3><p>Solicitações abertas com vencimento em até cinco dias.</p></div></article>
+            <article class="pending-focus-card danger"><div class="pending-focus-top"><span class="pending-focus-icon">×</span><strong class="count" id="focusOverdueCount">0</strong></div><div><h3>Prazo ultrapassado</h3><p>Solicitações que continuam abertas após a data prevista.</p></div></article>
+          </section>
+
+          <section class="activity-panel" aria-labelledby="pendingTableTitle">
+            <div class="activity-panel-header"><div><h3 id="pendingTableTitle">Fila de pendências</h3><p>Ordenada por urgência e responsabilidade atual.</p></div><span class="activity-count" id="pendingResultCount">0</span></div>
+            <div class="activity-toolbar">
+              <input class="activity-search" id="pendingSearch" type="search" placeholder="Buscar por código, solicitação, projeto ou responsável">
+              <select class="activity-select" id="pendingType"><option value="all">Todas as pendências</option><option value="action">Exigem minha ação</option><option value="soon">Próximas do prazo</option><option value="overdue">Em atraso</option><option value="watch">Em acompanhamento</option></select>
+              <select class="activity-select" id="pendingProject"><option value="all">Todos os projetos</option></select>
+              <button class="activity-clear" id="pendingClear" type="button">Limpar filtros</button>
+            </div>
+            <div class="activity-table-wrap">
+              <table class="activity-table">
+                <thead><tr><th>F4</th><th>Solicitação</th><th>Pendência</th><th>Responsável atual</th><th>Prazo</th><th>Status</th><th>Ação</th></tr></thead>
+                <tbody id="pendingBody"></tbody>
+              </table>
+            </div>
+            <div class="activity-empty" id="pendingEmpty" hidden><strong>Nenhuma pendência encontrada</strong><span>Não há F4 correspondentes aos filtros selecionados.</span></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./js/pages/pendencias.js"></script>
+</body>
+</html>
