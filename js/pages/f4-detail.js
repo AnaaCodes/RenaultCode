@@ -90,13 +90,23 @@ function currentVersion() {
   return normalizeVersion(f4?.currentVersion || '1.0.0');
 }
 
+function historySnapshotId(entry, index = (f4?.history || []).length) {
+  if (entry?.snapshotId) return entry.snapshotId;
+  const stamp = String(entry?.date || new Date().toISOString()).replace(/[^0-9]/g, '').slice(0, 17);
+  return `hist-${stamp || Date.now()}-${index}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
 function appendHistory(entry) {
   f4.history = f4.history || [];
-  f4.history.push({
+  const historyEntry = {
     ...entry,
     version: normalizeVersion(entry.version || currentVersion()),
     validationCycle: entry.validationCycle || f4.validationCycle || 1
-  });
+  };
+  historyEntry.snapshotId = historySnapshotId(historyEntry);
+  f4.history.push(historyEntry);
+  historyEntry.markdownSnapshot = buildHistoryMarkdown(historyEntry);
+  return historyEntry;
 }
 
 function latestInCurrentCycle(step) {
@@ -223,7 +233,7 @@ function changeHistoryPanel() {
     <td>${esc(entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema'))}</td>
     <td>${esc(historySector(entry))}</td>
     <td>${dateTime(entry.date || f4.updatedAt)}</td>
-    <td>${(entry.step === 'creation' || entry.contentChange === true || entry.step === 'final') && f4.versionSnapshots?.[entry.version]?.markdown ? `<button class="history-download-button" type="button" data-download-version="${esc(entry.version)}">Baixar .md</button>` : '<span class="history-file-empty">—</span>'}</td>
+    <td><button class="history-download-button" type="button" data-download-history="${esc(entry.snapshotId || '')}">Baixar PDF</button></td>
   </tr>`).join('');
 
   return `<section class="card detail-card change-history-panel" id="changeHistoryPanel" ${historyExpanded ? '' : 'hidden'}>
@@ -508,6 +518,27 @@ function buildVersionMarkdown(item, version, { final = false } = {}) {
   ].join('\n');
 }
 
+function buildHistoryMarkdown(entry) {
+  const version = normalizeVersion(entry.version || currentVersion());
+  const status = historyNewStatus(entry);
+  const stateAtAction = {
+    ...f4,
+    status: status || f4.status,
+    updatedAt: String(entry.date || f4.updatedAt || '').slice(0, 10) || f4.updatedAt
+  };
+  const isFinal = entry.step === 'final' || entry.finalApproval === true;
+  const base = buildVersionMarkdown(stateAtAction, version, { final: isFinal });
+  const details = markdownFields([
+    ['Alteração', entry.label || entry.step || 'Alteração da F4'],
+    ['Descrição', historyDescription(entry)],
+    ['Novo status', status],
+    ['Usuário responsável', entry.by || (entry.step === 'creation' ? f4.supplier : 'Sistema')],
+    ['Setor', historySector(entry)],
+    ['Data', dateTime(entry.date || f4.updatedAt)]
+  ]);
+  return `${base}\n\n## Registro desta alteração\n\n${details}\n`;
+}
+
 function createVersionSnapshot(version, { final = false, createdBy = profile.name } = {}) {
   f4.versionSnapshots = f4.versionSnapshots || {};
   f4.versionSnapshots[version] = {
@@ -556,6 +587,16 @@ function ensureVersioningState() {
   f4.currentVersion = normalizeVersion(f4.currentVersion || '1.0.0');
   f4.validationCycle = f4.validationCycle || 1;
   f4.versionSnapshots = f4.versionSnapshots || {};
+  f4.history.forEach((entry, index) => {
+    if (!entry.snapshotId) {
+      entry.snapshotId = historySnapshotId(entry, index);
+      changed = true;
+    }
+    if (!entry.markdownSnapshot) {
+      entry.markdownSnapshot = buildHistoryMarkdown(entry);
+      changed = true;
+    }
+  });
   f4.activeSignatures = Array.isArray(f4.activeSignatures) ? f4.activeSignatures : [];
   f4.signatureAudit = Array.isArray(f4.signatureAudit) ? f4.signatureAudit : [];
   f4.finalSignatures = Array.isArray(f4.finalSignatures) ? f4.finalSignatures : [];
@@ -622,8 +663,7 @@ function ensureVersioningState() {
   if (changed) saveWorkflowState(f4);
 }
 
-function downloadTextFile(filename, text, mime = 'text/markdown;charset=utf-8') {
-  const blob = new Blob([text], { type: mime });
+function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -634,11 +674,142 @@ function downloadTextFile(filename, text, mime = 'text/markdown;charset=utf-8') 
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function downloadVersionMarkdown(version) {
-  const snapshot = f4.versionSnapshots?.[version];
-  if (!snapshot?.markdown) return showToast('O arquivo desta versão não está disponível.');
+function cleanMarkdownText(value) {
+  return String(value ?? '')
+    .replaceAll('<br>', ' / ')
+    .replace(/\\\|/g, '|')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/^[-*]\s+/, '• ')
+    .trim();
+}
+
+function wrapPdfText(text, maxChars = 92) {
+  const source = String(text || '').trim();
+  if (!source) return [''];
+  const words = source.split(/\s+/);
+  const lines = [];
+  let current = '';
+  words.forEach(word => {
+    if (!current) { current = word; return; }
+    if (`${current} ${word}`.length <= maxChars) current += ` ${word}`;
+    else { lines.push(current); current = word; }
+  });
+  if (current) lines.push(current);
+  return lines;
+}
+
+function markdownToPdfLines(markdown) {
+  const output = [];
+  String(markdown || '').split(/\r?\n/).forEach(raw => {
+    const line = raw.trim();
+    if (!line) { output.push({ text:'', kind:'blank' }); return; }
+    if (/^\|\s*:?-{3,}/.test(line)) return;
+    const heading = line.match(/^(#{1,3})\s+(.*)$/);
+    if (heading) {
+      const level = heading[1].length;
+      wrapPdfText(cleanMarkdownText(heading[2]), level === 1 ? 62 : 78).forEach(text => output.push({ text, kind:`h${level}` }));
+      return;
+    }
+    if (line.startsWith('|') && line.endsWith('|')) {
+      const cells = line.slice(1, -1).split('|').map(cell => cleanMarkdownText(cell));
+      if (cells.every(cell => /^:?-{3,}:?$/.test(cell))) return;
+      const text = cells.length === 2 ? `${cells[0]}: ${cells[1]}` : cells.join('  |  ');
+      wrapPdfText(text, 96).forEach(part => output.push({ text:part, kind:'table' }));
+      return;
+    }
+    wrapPdfText(cleanMarkdownText(line), 94).forEach(text => output.push({ text, kind:'body' }));
+  });
+  return output;
+}
+
+function winAnsiHex(text) {
+  const special = new Map([
+    ['€',0x80],['‚',0x82],['ƒ',0x83],['„',0x84],['…',0x85],['†',0x86],['‡',0x87],['ˆ',0x88],['‰',0x89],['Š',0x8A],['‹',0x8B],['Œ',0x8C],['Ž',0x8E],
+    ['‘',0x91],['’',0x92],['“',0x93],['”',0x94],['•',0x95],['–',0x96],['—',0x97],['˜',0x98],['™',0x99],['š',0x9A],['›',0x9B],['œ',0x9C],['ž',0x9E],['Ÿ',0x9F]
+  ]);
+  let hex = '';
+  for (const char of String(text ?? '')) {
+    let code = char.charCodeAt(0);
+    if (special.has(char)) code = special.get(char);
+    else if (code > 255) code = 0x3F;
+    hex += code.toString(16).padStart(2, '0').toUpperCase();
+  }
+  return hex;
+}
+
+function pdfTextOp(text, x, y, size = 9, bold = false, purple = false) {
+  const color = purple ? '0.31 0.086 0.722 rg' : '0.12 0.13 0.15 rg';
+  return `BT /${bold ? 'F2' : 'F1'} ${size} Tf ${color} ${x} ${y} Td <${winAnsiHex(text)}> Tj ET\n`;
+}
+
+function markdownPdfBlob(markdown, { title, version } = {}) {
+  const tokens = markdownToPdfLines(markdown);
+  const pages = [];
+  let page = [];
+  let y = 758;
+  const style = token => {
+    if (token.kind === 'h1') return { size:16, bold:true, purple:true, gap:23 };
+    if (token.kind === 'h2') return { size:12, bold:true, purple:true, gap:18 };
+    if (token.kind === 'h3') return { size:10.5, bold:true, purple:false, gap:16 };
+    if (token.kind === 'table') return { size:8.2, bold:false, purple:false, gap:12 };
+    if (token.kind === 'blank') return { size:8, bold:false, purple:false, gap:8 };
+    return { size:9, bold:false, purple:false, gap:13 };
+  };
+  tokens.forEach(token => {
+    const st = style(token);
+    if (y - st.gap < 62) { pages.push(page); page = []; y = 758; }
+    page.push({ ...token, y, ...st });
+    y -= st.gap;
+  });
+  if (page.length || !pages.length) pages.push(page);
+
+  const objects = [null, '', '',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'
+  ];
+  const pageIds = [];
+  pages.forEach((items, pageIndex) => {
+    let stream = 'q\n0.31 0.086 0.722 rg\n42 799 511 2 re f\nQ\n';
+    stream += pdfTextOp(title || 'F4', 42, 812, 11, true, false);
+    stream += pdfTextOp(`Versão ${version || '—'} · Página ${pageIndex + 1} de ${pages.length}`, 365, 812, 8, false, false);
+    items.forEach(item => {
+      if (!item.text) return;
+      stream += pdfTextOp(item.text, 42, item.y, item.size, item.bold, item.purple);
+    });
+    stream += pdfTextOp('Documento gerado a partir do snapshot interno em Markdown.', 42, 28, 7.5, false, false);
+    const contentId = objects.push(`<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}endstream`) - 1;
+    const pageId = objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`) - 1;
+    pageIds.push(pageId);
+  });
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objects[2] = `<< /Type /Pages /Kids [${pageIds.map(id => `${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`;
+
+  let pdf = '%PDF-1.4\n%Renault F4\n';
+  const offsets = [0];
+  for (let i = 1; i < objects.length; i += 1) {
+    offsets[i] = new TextEncoder().encode(pdf).length;
+    pdf += `${i} 0 obj\n${objects[i]}\nendobj\n`;
+  }
+  const xref = new TextEncoder().encode(pdf).length;
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let i = 1; i < objects.length; i += 1) pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new Blob([new TextEncoder().encode(pdf)], { type:'application/pdf' });
+}
+
+function downloadHistoryPdf(snapshotId) {
+  const entry = (f4.history || []).find(item => item.snapshotId === snapshotId);
+  if (!entry) return showToast('Não foi possível localizar essa alteração no histórico.');
+  if (!entry.markdownSnapshot) {
+    entry.markdownSnapshot = buildHistoryMarkdown(entry);
+    saveWorkflowState(f4);
+  }
   const code = getF4Code(f4).replace('/', '-');
-  downloadTextFile(`${code}_v${version}${snapshot.final ? '_FINAL' : ''}.md`, snapshot.markdown);
+  const safeLabel = String(entry.label || 'alteracao').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 45) || 'alteracao';
+  const blob = markdownPdfBlob(entry.markdownSnapshot, { title:`F4 ${getF4Code(f4)} · ${entry.label || 'Alteração'}`, version:entry.version });
+  downloadBlob(`${code}_v${entry.version}_${safeLabel}.pdf`, blob);
 }
 
 const editableFields = [
@@ -1308,8 +1479,8 @@ function setupComments() {
 }
 
 function setupVersionDownloads() {
-  document.querySelectorAll('[data-download-version]').forEach(button => {
-    button.onclick = () => downloadVersionMarkdown(button.dataset.downloadVersion);
+  document.querySelectorAll('[data-download-history]').forEach(button => {
+    button.onclick = () => downloadHistoryPdf(button.dataset.downloadHistory);
   });
 }
 
@@ -1328,7 +1499,7 @@ function setupContentEditor() {
     if (!saveContentEdition(form)) return;
     const newVersion = currentVersion();
     editExpanded = false;
-    showToast(`Conteúdo atualizado. Nova versão ${newVersion} criada e arquivo .md registrado.`);
+    showToast(`Conteúdo atualizado. Nova versão ${newVersion} criada. O snapshot interno foi registrado e o PDF está disponível no histórico.`);
     f4 = getF4ById(f4.id);
     render();
   };
